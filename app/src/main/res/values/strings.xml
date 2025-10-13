@@ -190,4 +190,11 @@
     <string name="marcar_favorito">Marcar como favorito</string>
     <string name="guardar_lugar">Guardar lugar</string>
     <string name="buscar_mapa">Buscar en mapa</string>
+
+    <!-- Tarjetas Screen -->
+    <string name="tarjetas_credito">Tarjetas de crédito</string>
+    <string name="tarjetas_debito">Tarjetas de débito</string>
+    <string name="no_hay_tarjetas">No tienes tarjetas registradas</string>
+    <string name="nombre_tarjeta_requerido">Ingresa un nombre para la tarjeta</string>
+    <string name="tarjeta_guardada">Tarjeta guardada</string>
 </resources>

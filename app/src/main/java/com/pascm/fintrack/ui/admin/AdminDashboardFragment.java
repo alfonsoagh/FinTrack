@@ -27,8 +27,6 @@ public class AdminDashboardFragment extends Fragment {
         View cardUsuarios = view.findViewById(R.id.cardUsuarios);
         View cardConfig = view.findViewById(R.id.cardConfig);
         View cardCatalogo = view.findViewById(R.id.cardCatalogo);
-        View cardPresupuestos = view.findViewById(R.id.cardPresupuestos);
-        View cardTextos = view.findViewById(R.id.cardTextos);
         View cardAjustes = view.findViewById(R.id.cardAjustes);
 
         if (btnBack != null) btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
@@ -40,12 +38,6 @@ public class AdminDashboardFragment extends Fragment {
         );
         if (cardCatalogo != null) cardCatalogo.setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminCatalogo)
-        );
-        if (cardPresupuestos != null) cardPresupuestos.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminPresupuestos)
-        );
-        if (cardTextos != null) cardTextos.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminTextos)
         );
         if (cardAjustes != null) cardAjustes.setOnClickListener(v ->
                 Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminSettings)

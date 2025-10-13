@@ -45,7 +45,7 @@
             app:destination="@id/reportesFragment" />
     </fragment>
 
-    <!-- Panel de Admin con nuevo menú -->
+    <!-- Panel de Admin con menú reducido -->
     <fragment
         android:id="@+id/adminDashboardFragment"
         android:name="com.pascm.fintrack.ui.admin.AdminDashboardFragment"
@@ -59,12 +59,6 @@
         <action
             android:id="@+id/action_adminDashboard_to_adminCatalogo"
             app:destination="@id/adminCatalogoFragment" />
-        <action
-            android:id="@+id/action_adminDashboard_to_adminPresupuestos"
-            app:destination="@id/adminPresupuestosFragment" />
-        <action
-            android:id="@+id/action_adminDashboard_to_adminTextos"
-            app:destination="@id/adminTextosFragment" />
         <action
             android:id="@+id/action_adminDashboard_to_adminSettings"
             app:destination="@id/adminSettingsFragment" />
@@ -84,16 +78,6 @@
         android:id="@+id/adminCatalogoFragment"
         android:name="com.pascm.fintrack.ui.admin.AdminCatalogoFragment"
         android:label="Catálogo" />
-
-    <fragment
-        android:id="@+id/adminPresupuestosFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminPresupuestosFragment"
-        android:label="Presupuestos" />
-
-    <fragment
-        android:id="@+id/adminTextosFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminTextosFragment"
-        android:label="Textos y recursos" />
 
     <fragment
         android:id="@+id/adminSettingsFragment"
@@ -161,4 +145,18 @@
         android:id="@+id/agregarLugarFragment"
         android:name="com.pascm.fintrack.ui.lugares.AgregarLugarFragment"
         android:label="Agregar Lugar" />
+
+    <fragment
+        android:id="@+id/cardsListFragment"
+        android:name="com.pascm.fintrack.ui.cards.CardsListFragment"
+        android:label="Tarjetas">
+        <action
+            android:id="@+id/action_cardsList_to_addCard"
+            app:destination="@id/addCardFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addCardFragment"
+        android:name="com.pascm.fintrack.ui.cards.AddCardFragment"
+        android:label="Agregar tarjeta" />
 </navigation>

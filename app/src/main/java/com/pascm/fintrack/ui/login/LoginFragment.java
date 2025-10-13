@@ -14,6 +14,7 @@ import androidx.navigation.Navigation;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.databinding.FragmentLoginBinding;
 import com.pascm.fintrack.data.TripPrefs;
+import com.pascm.fintrack.util.PlacesManager;
 
 public class LoginFragment extends Fragment {
 
@@ -38,9 +39,11 @@ public class LoginFragment extends Fragment {
 
             if ("user".equalsIgnoreCase(email) && "123".equals(pass)) {
                 TripPrefs.setActiveTrip(requireContext(), false); // reset Modo Viaje
+                PlacesManager.setHasPlaces(requireContext(), false); // reset Lugares
                 Navigation.findNavController(v).navigate(R.id.action_login_to_home);
             } else if ("admin".equalsIgnoreCase(email) && "321".equals(pass)) {
                 TripPrefs.setActiveTrip(requireContext(), false); // reset Modo Viaje
+                PlacesManager.setHasPlaces(requireContext(), false); // reset Lugares
                 Navigation.findNavController(v).navigate(R.id.action_login_to_admin);
             } else {
                 Toast.makeText(requireContext(), "Credenciales inválidas", Toast.LENGTH_SHORT).show();

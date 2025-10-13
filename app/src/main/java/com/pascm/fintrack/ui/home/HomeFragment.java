@@ -13,6 +13,7 @@ import androidx.navigation.Navigation;
 
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.databinding.FragmentHomeBinding;
+import com.pascm.fintrack.util.CardsManager;
 
 public class HomeFragment extends Fragment {
 
@@ -41,18 +42,22 @@ public class HomeFragment extends Fragment {
                 Navigation.findNavController(v).navigate(R.id.action_home_to_recordatorios)
         );
 
-        // Account cards - navigate to placeholder or show toast
+        // Account cards - navegar a listas de tarjetas
         binding.cardEfectivo.setOnClickListener(v ->
                 Toast.makeText(requireContext(), "Cuenta Efectivo", Toast.LENGTH_SHORT).show()
         );
 
-        binding.cardCredito.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Cuenta Crédito", Toast.LENGTH_SHORT).show()
-        );
+        binding.cardCredito.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putString("type", CardsManager.TYPE_CREDIT);
+            Navigation.findNavController(v).navigate(R.id.cardsListFragment, args);
+        });
 
-        binding.cardDebito.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Cuenta Débito", Toast.LENGTH_SHORT).show()
-        );
+        binding.cardDebito.setOnClickListener(v -> {
+            Bundle args = new Bundle();
+            args.putString("type", CardsManager.TYPE_DEBIT);
+            Navigation.findNavController(v).navigate(R.id.cardsListFragment, args);
+        });
 
         // Suggested actions
         binding.cardModoViaje.setOnClickListener(v ->
