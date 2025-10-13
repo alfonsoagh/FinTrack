@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary_light">#E3F2FD</color>
+
+    <color name="primary">#167CCA</color>
+    <color name="background_light">#F6F7F8</color>
+    <color name="on_surface">#111827</color>          <!-- casi negro -->
+    <color name="surface_variant">#E7E9EC</color>     <!-- bordes suaves -->
+    <color name="on_surface_variant">#6B7280</color>  <!-- gris texto secundario -->
+    <color name="bottom_nav_background">#FFFFFFFF</color>
+    <color name="bottom_nav_item_enabled">#6B7280</color>
+    <color name="bottom_nav_item_selected">#111827</color>
+
+    <!-- Badge colors -->
+    <color name="paid_green">#10B981</color>
+    <color name="pending_amber">#F59E0B</color>
+    <!-- 10% opacity backgrounds for badges -->
+    <color name="paid_green_translucent">#1A10B981</color>
+    <color name="pending_amber_translucent">#1AF59E0B</color>
+
+    <!-- Perfil palette (from provided design) -->
+    <color name="profile_primary">#16CA16</color>
+    <color name="profile_background_light">#F6F8F6</color>
+    <color name="profile_subtle">#638863</color>
+    <color name="profile_primary_20">#3316CA16</color>
+</resources>

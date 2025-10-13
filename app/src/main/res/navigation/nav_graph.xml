@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <!-- Acción global: logout a login -->
+    <action
+        android:id="@+id/action_global_logout_to_login"
+        app:destination="@id/loginFragment"
+        app:popUpTo="@id/loginFragment"
+        app:popUpToInclusive="true" />
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.pascm.fintrack.ui.login.LoginFragment"
+        android:label="Iniciar sesión">
+        <action
+            android:id="@+id/action_login_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_login_to_admin"
+            app:destination="@id/adminDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.pascm.fintrack.ui.home.HomeFragment"
+        android:label="Inicio">
+        <action
+            android:id="@+id/action_home_to_modo_viaje"
+            app:destination="@id/modoViajeFragment" />
+        <action
+            android:id="@+id/action_home_to_agregar_movimiento"
+            app:destination="@id/agregarMovimientoFragment" />
+        <action
+            android:id="@+id/action_home_to_recordatorios"
+            app:destination="@id/recordatoriosFragment" />
+        <action
+            android:id="@+id/action_home_to_reportes"
+            app:destination="@id/reportesFragment" />
+    </fragment>
+
+    <!-- Panel de Admin con nuevo menú -->
+    <fragment
+        android:id="@+id/adminDashboardFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminDashboardFragment"
+        android:label="Panel de Administración">
+        <action
+            android:id="@+id/action_adminDashboard_to_adminUsuarios"
+            app:destination="@id/adminUsuariosFragment" />
+        <action
+            android:id="@+id/action_adminDashboard_to_adminConfig"
+            app:destination="@id/adminConfigFragment" />
+        <action
+            android:id="@+id/action_adminDashboard_to_adminCatalogo"
+            app:destination="@id/adminCatalogoFragment" />
+        <action
+            android:id="@+id/action_adminDashboard_to_adminPresupuestos"
+            app:destination="@id/adminPresupuestosFragment" />
+        <action
+            android:id="@+id/action_adminDashboard_to_adminTextos"
+            app:destination="@id/adminTextosFragment" />
+        <action
+            android:id="@+id/action_adminDashboard_to_adminSettings"
+            app:destination="@id/adminSettingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/adminUsuariosFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminUsuariosFragment"
+        android:label="Gestión de usuarios" />
+
+    <fragment
+        android:id="@+id/adminConfigFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminConfigFragment"
+        android:label="Configuración del producto" />
+
+    <fragment
+        android:id="@+id/adminCatalogoFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminCatalogoFragment"
+        android:label="Catálogo" />
+
+    <fragment
+        android:id="@+id/adminPresupuestosFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminPresupuestosFragment"
+        android:label="Presupuestos" />
+
+    <fragment
+        android:id="@+id/adminTextosFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminTextosFragment"
+        android:label="Textos y recursos" />
+
+    <fragment
+        android:id="@+id/adminSettingsFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminSettingsFragment"
+        android:label="Ajustes" />
+
+    <fragment
+        android:id="@+id/modoViajeFragment"
+        android:name="com.pascm.fintrack.ui.viaje.ModoViajeFragment"
+        android:label="Modo Viaje">
+        <action
+            android:id="@+id/action_modo_viaje_to_nuevo_viaje"
+            app:destination="@id/nuevoViajeFragment" />
+        <action
+            android:id="@+id/action_modo_viaje_to_viaje_activo"
+            app:destination="@id/viajeActivoFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nuevoViajeFragment"
+        android:name="com.pascm.fintrack.ui.viaje.NuevoViajeFragment"
+        android:label="Nuevo Viaje">
+        <action
+            android:id="@+id/action_nuevo_viaje_to_viaje_activo"
+            app:destination="@id/viajeActivoFragment"
+            app:popUpTo="@id/modoViajeFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/viajeActivoFragment"
+        android:name="com.pascm.fintrack.ui.viaje.ViajeActivoFragment"
+        android:label="Viaje Activo" />
+
+    <fragment
+        android:id="@+id/agregarMovimientoFragment"
+        android:name="com.pascm.fintrack.ui.movimiento.AgregarMovimientoFragment"
+        android:label="Nuevo movimiento" />
+
+    <fragment
+        android:id="@+id/recordatoriosFragment"
+        android:name="com.pascm.fintrack.ui.recordatorios.RecordatoriosFragment"
+        android:label="Recordatorios de Pagos" />
+
+    <fragment
+        android:id="@+id/reportesFragment"
+        android:name="com.pascm.fintrack.ui.reportes.ReportesFragment"
+        android:label="Reportes" />
+
+    <fragment
+        android:id="@+id/perfilFragment"
+        android:name="com.pascm.fintrack.ui.perfil.PerfilFragment"
+        android:label="Perfil" />
+
+    <fragment
+        android:id="@+id/lugaresFragment"
+        android:name="com.pascm.fintrack.ui.lugares.LugaresFragment"
+        android:label="Lugares">
+        <action
+            android:id="@+id/action_lugares_to_agregar_lugar"
+            app:destination="@id/agregarLugarFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/agregarLugarFragment"
+        android:name="com.pascm.fintrack.ui.lugares.AgregarLugarFragment"
+        android:label="Agregar Lugar" />
+</navigation>

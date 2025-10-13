@@ -1,0 +1,46 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.FinTrack" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Desactiva overlays de Material You -->
+        <item name="android:forceDarkAllowed">false</item>
+
+        <!-- Colores base -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSurface">@color/background_light</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+
+        <!-- Desactiva dynamic colors de Material You -->
+        <item name="dynamicColorThemeOverlay">@null</item>
+
+        <!-- Tipografía más "limpia" para el balance -->
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.FinTrack.Balance</item>
+
+        <!-- Quita la pastilla activa del bottom nav -->
+        <item name="bottomNavigationStyle">@style/Widget.FinTrack.BottomNavigation</item>
+    </style>
+
+    <style name="TextAppearance.FinTrack.Balance" parent="TextAppearance.Material3.DisplayMedium">
+        <item name="fontFamily">sans-serif-light</item>
+    </style>
+
+    <!-- Estilo de BottomNavigation sin pastilla -->
+    <style name="Widget.FinTrack.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemActiveIndicatorStyle">@style/BottomNavActiveIndicator.None</item>
+        <item name="android:background">@color/bottom_nav_background</item>
+        <item name="elevation">8dp</item>
+    </style>
+
+    <style name="BottomNavActiveIndicator.None" parent="">
+        <item name="android:height">0dp</item>
+        <item name="android:width">0dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:shape">rectangle</item>
+        <item name="android:color">@android:color/transparent</item>
+    </style>
+
+</resources>

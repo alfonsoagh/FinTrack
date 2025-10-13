@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="200dp"
+    android:viewportWidth="400"
+    android:viewportHeight="200">
+
+    <!-- Beach/Ocean gradient background -->
+    <path
+        android:fillColor="#87CEEB"
+        android:pathData="M0,0h400v200h-400z" />
+
+    <!-- Sun -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M320,50m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0" />
+
+    <!-- Water -->
+    <path
+        android:fillColor="#4A9EE0"
+        android:pathData="M0,120h400v80h-400z" />
+
+    <!-- Sand -->
+    <path
+        android:fillColor="#F4E8C1"
+        android:pathData="M0,150 Q100,140 200,150 T400,150 L400,200 L0,200 Z" />
+
+    <!-- Palm tree trunk -->
+    <path
+        android:fillColor="#8B5A3C"
+        android:pathData="M80,180 L85,140 L90,180 Z" />
+
+    <!-- Palm leaves -->
+    <path
+        android:fillColor="#228B22"
+        android:pathData="M85,140 Q70,130 60,135 Q70,138 85,140 Z" />
+    <path
+        android:fillColor="#228B22"
+        android:pathData="M85,140 Q100,130 110,135 Q100,138 85,140 Z" />
+    <path
+        android:fillColor="#228B22"
+        android:pathData="M85,140 Q85,120 90,110 Q88,125 85,140 Z" />
+</vector>

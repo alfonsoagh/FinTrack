@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Background circle -->
+    <path
+        android:pathData="M100,100 m-70,0 a 70,70 0 1,0 140,0 a 70,70 0 1,0 -140,0"
+        android:fillColor="#00000000"
+        android:strokeColor="#E5E7EB"
+        android:strokeWidth="20"/>
+
+    <!-- Green segment (80%) -->
+    <path
+        android:pathData="M100,30 A 70,70 0 1,1 30,100"
+        android:fillColor="#00000000"
+        android:strokeColor="#4ADE80"
+        android:strokeWidth="20"/>
+
+    <!-- Orange segment (20%) -->
+    <path
+        android:pathData="M30,100 A 70,70 0 0,1 100,30"
+        android:fillColor="#00000000"
+        android:strokeColor="#FB923C"
+        android:strokeWidth="20"/>
+</vector>

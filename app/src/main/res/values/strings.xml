@@ -1,0 +1,193 @@
+<resources>
+    <string name="app_name">FinTrack</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="login_email">Correo electrónico</string>
+    <string name="login_password">Contraseña</string>
+    <string name="login_sign_in">Iniciar sesión</string>
+    <string name="login_create_account">Crear cuenta nueva</string>
+    <string name="login_slogan">El mapa de tus finanzas</string>
+
+    <!-- Home Screen -->
+    <string name="total_balance">Balance Total</string>
+    <string name="notifications">Notificaciones</string>
+    <string name="efectivo">Efectivo</string>
+    <string name="credito">Crédito</string>
+    <string name="debito">Débito</string>
+    <string name="one_account">1 cuenta</string>
+    <string name="two_accounts">2 cuentas</string>
+    <string name="three_accounts">3 cuentas</string>
+    <string name="suggested_actions">Acciones Sugeridas</string>
+    <string name="modo_viaje">Modo Viaje</string>
+    <string name="reportes">Reportes</string>
+    <string name="lugares_frecuentes">Lugares frecuentes</string>
+    <string name="add_movement">Agregar movimiento</string>
+
+    <!-- Bottom Navigation -->
+    <string name="inicio">Inicio</string>
+    <string name="viajes">Viajes</string>
+    <string name="lugares">Lugares</string>
+    <string name="perfil">Perfil</string>
+
+    <!-- Modo Viaje Screen -->
+    <string name="no_active_trip">No hay un viaje activo</string>
+    <string name="create_trip_message">Crea un nuevo viaje para empezar a registrar tus gastos.</string>
+    <string name="add_new_trip">Agregar nuevo viaje</string>
+    <string name="trip_to_coast">Viaje a la costa</string>
+    <string name="active">Activo</string>
+    <string name="currency_mxn">MXN</string>
+    <string name="ciudad_mexico">Ciudad de México</string>
+    <string name="cancun">Cancún</string>
+    <string name="to">a</string>
+    <string name="budget">Presupuesto</string>
+    <string name="budget_progress">$1250 / $5000</string>
+    <string name="trip_image">Imagen del viaje</string>
+    <string name="view_trip_details">Ver detalles del viaje</string>
+    <string name="end_trip">Finalizar viaje</string>
+
+    <!-- Agregar Movimiento Screen -->
+    <string name="close">Cerrar</string>
+    <string name="nuevo_movimiento">Nuevo movimiento</string>
+    <string name="ingreso">Ingreso</string>
+    <string name="gasto">Gasto</string>
+    <string name="transferencia">Transferencia</string>
+    <string name="categoria">Categoría</string>
+    <string name="cuenta">Cuenta</string>
+    <string name="fecha">Fecha</string>
+    <string name="hoy">Hoy, 14:26</string>
+    <string name="nota_opcional">Nota (opcional)</string>
+    <string name="opciones_adicionales">Opciones adicionales</string>
+    <string name="adjuntar_foto">Adjuntar foto o video</string>
+    <string name="ubicacion_gps">Ubicación (GPS)</string>
+    <string name="expand">Expandir</string>
+    <string name="guardar_movimiento">Guardar movimiento</string>
+
+    <!-- Categories -->
+    <string-array name="categories">
+        <item>Comida</item>
+        <item>Transporte</item>
+        <item>Ocio</item>
+        <item>Salud</item>
+        <item>Educación</item>
+        <item>Otros</item>
+    </string-array>
+
+    <!-- Accounts -->
+    <string-array name="accounts">
+        <item>Tarjeta de Crédito</item>
+        <item>Efectivo</item>
+        <item>Tarjeta de Débito</item>
+    </string-array>
+
+    <!-- Recordatorios Screen -->
+    <string name="recordatorios_de_pagos">Recordatorios de Pagos</string>
+    <string name="proximos_pagos">Próximos Pagos</string>
+    <string name="pagos_realizados">Pagos Realizados</string>
+    <string name="pendiente">Pendiente</string>
+    <string name="pagado">Pagado</string>
+    <string name="add_recordatorio">Agregar recordatorio</string>
+
+    <!-- Cards content -->
+    <string name="tarjeta_platinum">Tarjeta Platinum</string>
+    <string name="tarjeta_gold">Tarjeta Gold</string>
+    <string name="tarjeta_rewards">Tarjeta Rewards</string>
+
+    <string name="vence_15_julio">Vence: 15 Julio</string>
+    <string name="vence_20_julio">Vence: 20 Julio</string>
+    <string name="pagado_25_junio">Pagado: 25 Junio</string>
+    <string name="pagado_12_junio">Pagado: 12 Junio</string>
+
+    <!-- Amounts for Recordatorios cards -->
+    <string name="amount_250">$250.00</string>
+    <string name="amount_180">$180.00</string>
+    <string name="amount_320">$320.00</string>
+
+    <!-- Perfil Screen -->
+    <string name="editar">Editar</string>
+    <string name="nombre_usuario">Nombre de usuario</string>
+    <string name="correo_electronico">Correo electrónico</string>
+    <string name="tipo_moneda">Tipo de moneda principal</string>
+    <string name="preferencias_notificacion">Preferencias de notificación</string>
+    <string name="activar_alertas">Activar alertas</string>
+    <string name="privacidad_gps">Privacidad del GPS</string>
+    <string name="permite_gps_viajes">Permitir uso solo en viajes</string>
+    <string name="guardar_cambios">Guardar cambios</string>
+    <string name="cerrar_sesion">Cerrar sesión</string>
+    <string name="bloqueado">Bloqueado</string>
+    <string name="expandir">Expandir</string>
+    <string name="moneda_mxn">MXN</string>
+
+    <!-- Perfil sample data -->
+    <string name="sample_nombre">Sofia Ramirez</string>
+    <string name="sample_correo">sofia.ramirez@email.com</string>
+
+    <!-- Nuevo Viaje Screen -->
+    <string name="nuevo_viaje">Nuevo Viaje</string>
+    <string name="nombre_viaje">Nombre del Viaje</string>
+    <string name="hint_nombre_viaje">Ej: Vacaciones en la playa</string>
+    <string name="presupuesto">Presupuesto</string>
+    <string name="hint_presupuesto">1000</string>
+    <string name="moneda">Moneda</string>
+    <string name="origen">Origen</string>
+    <string name="hint_origen">Ciudad de México</string>
+    <string name="destino">Destino</string>
+    <string name="hint_destino">Cancún</string>
+    <string name="fecha_inicio">Fecha de Inicio</string>
+    <string name="fecha_fin">Fecha de Fin</string>
+    <string name="hint_fecha">DD/MM/AAAA</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="guardar_viaje">Guardar Viaje</string>
+
+    <!-- Currencies -->
+    <string-array name="currencies">
+        <item>USD</item>
+        <item>EUR</item>
+        <item>MXN</item>
+    </string-array>
+
+    <!-- Reportes Screen -->
+    <string name="back">Regresar</string>
+    <string name="resumen">Resumen</string>
+    <string name="total_gastado">Total Gastado</string>
+    <string name="disponible">Disponible</string>
+    <string name="ahorro">Ahorro</string>
+    <string name="gastos">Gastos</string>
+    <string name="filtros">Filtros</string>
+    <string name="por_categoria">Por Categoría</string>
+    <string name="por_tipo_cuenta">Por Tipo de Cuenta</string>
+    <string name="exportar_csv">Exportar a CSV</string>
+
+    <!-- Viaje Activo Screen -->
+    <string name="viaje_activo">Viaje activo</string>
+    <string name="itinerario">Itinerario</string>
+    <string name="cdmx_cancun">CDMX → Cancún</string>
+    <string name="fecha_viaje">05 Oct - 12 Oct</string>
+    <string name="presupuesto_mxn">Presupuesto (MXN)</string>
+    <string name="gastado">Gastado</string>
+    <string name="restante">Restante</string>
+    <string name="dias_restantes">Días restantes</string>
+    <string name="transacciones">Transacciones</string>
+    <string name="top_categoria">Top categoría</string>
+    <string name="gastos_recientes">Gastos recientes</string>
+    <string name="finalizar_viaje">Finalizar viaje</string>
+    <string name="ver_mapa">Ver mapa</string>
+
+    <!-- Lugares Screen -->
+    <string name="no_lugares">No hay lugares registrados</string>
+    <string name="lugares_message">Guarda tus lugares frecuentes para registrarlos rápido en tus gastos</string>
+    <string name="add_new_place">Agregar nuevo lugar</string>
+    <string name="agregar_lugar">Agregar lugar frecuente</string>
+    <string name="nombre_lugar">Nombre del lugar</string>
+    <string name="hint_nombre_lugar">Ej. Aeropuerto CDMX</string>
+    <string name="latitud">Latitud</string>
+    <string name="longitud">Longitud</string>
+    <string name="hint_latitud">Ej. 19.4326</string>
+    <string name="hint_longitud">Ej. -99.1332</string>
+    <string name="usar_ubicacion">Usar ubicación actual</string>
+    <string name="nota">Nota</string>
+    <string name="hint_nota">Detalle opcional</string>
+    <string name="etiqueta_color">Etiqueta / color</string>
+    <string name="marcar_favorito">Marcar como favorito</string>
+    <string name="guardar_lugar">Guardar lugar</string>
+    <string name="buscar_mapa">Buscar en mapa</string>
+</resources>
