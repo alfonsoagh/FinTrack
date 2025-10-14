@@ -5,6 +5,7 @@
     <color name="primary_light">#E3F2FD</color>
 
     <color name="primary">#167CCA</color>
+    <color name="secondary">#81BB3C</color>
     <color name="background_light">#F6F7F8</color>
     <color name="on_surface">#111827</color>          <!-- casi negro -->
     <color name="surface_variant">#E7E9EC</color>     <!-- bordes suaves -->

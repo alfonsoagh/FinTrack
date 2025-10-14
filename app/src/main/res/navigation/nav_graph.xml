@@ -76,6 +76,9 @@
         <action
             android:id="@+id/action_adminDashboard_to_adminSettings"
             app:destination="@id/adminSettingsFragment" />
+        <action
+            android:id="@+id/action_adminDashboard_to_adminMetricas"
+            app:destination="@id/adminMetricasFragment" />
     </fragment>
 
     <fragment
@@ -97,6 +100,11 @@
         android:id="@+id/adminSettingsFragment"
         android:name="com.pascm.fintrack.ui.admin.AdminSettingsFragment"
         android:label="Ajustes" />
+
+    <fragment
+        android:id="@+id/adminMetricasFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminMetricasFragment"
+        android:label="Métricas" />
 
     <fragment
         android:id="@+id/modoViajeFragment"

@@ -23,24 +23,38 @@ public class AdminDashboardFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        View btnBack = view.findViewById(R.id.btnBack);
+        // Referencias a las nuevas tarjetas
         View cardUsuarios = view.findViewById(R.id.cardUsuarios);
-        View cardConfig = view.findViewById(R.id.cardConfig);
-        View cardCatalogo = view.findViewById(R.id.cardCatalogo);
-        View cardAjustes = view.findViewById(R.id.cardAjustes);
+        View cardCategorias = view.findViewById(R.id.cardCategorias);
+        View cardMetricas = view.findViewById(R.id.cardMetricas);
+        View btnTheme = view.findViewById(R.id.btnTheme);
 
-        if (btnBack != null) btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
-        if (cardUsuarios != null) cardUsuarios.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminUsuarios)
-        );
-        if (cardConfig != null) cardConfig.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminConfig)
-        );
-        if (cardCatalogo != null) cardCatalogo.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminCatalogo)
-        );
-        if (cardAjustes != null) cardAjustes.setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminSettings)
-        );
+        // Navegar a Usuarios
+        if (cardUsuarios != null) {
+            cardUsuarios.setOnClickListener(v ->
+                    Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminUsuarios)
+            );
+        }
+
+        // Navegar a Categorías (usando el existente Catálogo)
+        if (cardCategorias != null) {
+            cardCategorias.setOnClickListener(v ->
+                    Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminCatalogo)
+            );
+        }
+
+        // Navegar a Métricas
+        if (cardMetricas != null) {
+            cardMetricas.setOnClickListener(v ->
+                    Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminMetricas)
+            );
+        }
+
+        // Botón de tema (opcional - implementar cambio de tema)
+        if (btnTheme != null) {
+            btnTheme.setOnClickListener(v -> {
+                // TODO: Implementar cambio de tema dark/light
+            });
+        }
     }
 }
