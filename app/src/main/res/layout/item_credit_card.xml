@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cardContainer"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:padding="20dp">
+
+        <!-- Header con banco y logo -->
+        <ImageView
+            android:id="@+id/imgCardIcon"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/shape_circle_white_alpha"
+            android:contentDescription="Card icon"
+            android:padding="8dp"
+            android:src="@drawable/ic_credit_card_24"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/white" />
+
+        <TextView
+            android:id="@+id/txtBankName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:text="Banco Santander"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/txtCardLabel"
+            app:layout_constraintEnd_toStartOf="@id/imgBrandLogo"
+            app:layout_constraintStart_toEndOf="@id/imgCardIcon"
+            app:layout_constraintTop_toTopOf="@id/imgCardIcon"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <TextView
+            android:id="@+id/txtCardLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:alpha="0.9"
+            android:text="Tarjeta de Viajes"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@id/imgCardIcon"
+            app:layout_constraintEnd_toStartOf="@id/imgBrandLogo"
+            app:layout_constraintStart_toEndOf="@id/imgCardIcon"
+            app:layout_constraintTop_toBottomOf="@id/txtBankName" />
+
+        <ImageView
+            android:id="@+id/imgBrandLogo"
+            android:layout_width="48dp"
+            android:layout_height="24dp"
+            android:contentDescription="Brand logo"
+            android:scaleType="fitCenter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Número de tarjeta -->
+        <TextView
+            android:id="@+id/txtCardNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.12"
+            android:text="•••• •••• •••• 1234"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imgCardIcon"
+            app:layout_constraintBottom_toTopOf="@id/statsContainer"
+            app:layout_constraintVertical_bias="0.4" />
+
+        <!-- Grid de estadísticas -->
+        <LinearLayout
+            android:id="@+id/statsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3"
+            app:layout_constraintBottom_toTopOf="@id/progressContainer"
+            android:layout_marginBottom="12dp">
+
+            <!-- Saldo -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SALDO"
+                    android:textColor="@color/white"
+                    android:alpha="0.75"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/txtBalance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="5,250"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Límite -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LÍMITE"
+                    android:textColor="@color/white"
+                    android:alpha="0.75"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/txtLimit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="20,000"
+                    android:textColor="@color/white"
+                    android:alpha="0.95"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Badge de uso -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/shape_rounded_white_alpha"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_speed"
+                        android:layout_marginEnd="4dp"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/txtUsageLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bajo uso"
+                        android:textColor="@color/white"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Barra de progreso -->
+        <LinearLayout
+            android:id="@+id/progressContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="10dp"
+                android:background="@drawable/progress_bg"
+                android:max="100"
+                android:progress="26"
+                android:progressDrawable="@drawable/progress_gradient" />
+
+            <TextView
+                android:id="@+id/txtUsagePercentage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="end"
+                android:text="26% de uso"
+                android:textColor="@color/white"
+                android:alpha="0.85"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

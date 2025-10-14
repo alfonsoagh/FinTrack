@@ -47,17 +47,13 @@ public class HomeFragment extends Fragment {
                 Toast.makeText(requireContext(), "Cuenta Efectivo", Toast.LENGTH_SHORT).show()
         );
 
-        binding.cardCredito.setOnClickListener(v -> {
-            Bundle args = new Bundle();
-            args.putString("type", CardsManager.TYPE_CREDIT);
-            Navigation.findNavController(v).navigate(R.id.cardsListFragment, args);
-        });
+        binding.cardCredito.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_home_to_credit_cards)
+        );
 
-        binding.cardDebito.setOnClickListener(v -> {
-            Bundle args = new Bundle();
-            args.putString("type", CardsManager.TYPE_DEBIT);
-            Navigation.findNavController(v).navigate(R.id.cardsListFragment, args);
-        });
+        binding.cardDebito.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_home_to_debit_cards)
+        );
 
         // Suggested actions
         binding.cardModoViaje.setOnClickListener(v ->
@@ -69,7 +65,7 @@ public class HomeFragment extends Fragment {
         );
 
         binding.cardLugaresFrecuentes.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Lugares frecuentes", Toast.LENGTH_SHORT).show()
+                Navigation.findNavController(v).navigate(R.id.lugaresFragment)
         );
 
         // Bottom navigation

@@ -25,7 +25,15 @@
             app:destination="@id/adminDashboardFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_login_to_registro"
+            app:destination="@id/registroFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/registroFragment"
+        android:name="com.pascm.fintrack.ui.login.RegistroFragment"
+        android:label="Crear cuenta" />
 
     <fragment
         android:id="@+id/homeFragment"
@@ -43,6 +51,12 @@
         <action
             android:id="@+id/action_home_to_reportes"
             app:destination="@id/reportesFragment" />
+        <action
+            android:id="@+id/action_home_to_debit_cards"
+            app:destination="@id/debitCardsFragment" />
+        <action
+            android:id="@+id/action_home_to_credit_cards"
+            app:destination="@id/creditCardsFragment" />
     </fragment>
 
     <!-- Panel de Admin con menú reducido -->
@@ -159,4 +173,32 @@
         android:id="@+id/addCardFragment"
         android:name="com.pascm.fintrack.ui.cards.AddCardFragment"
         android:label="Agregar tarjeta" />
+
+    <fragment
+        android:id="@+id/debitCardsFragment"
+        android:name="com.pascm.fintrack.ui.cards.DebitCardsFragment"
+        android:label="Tarjetas de Débito">
+        <action
+            android:id="@+id/action_debitCards_to_addDebitCard"
+            app:destination="@id/addDebitCardFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/creditCardsFragment"
+        android:name="com.pascm.fintrack.ui.cards.CreditCardsFragment"
+        android:label="Tarjetas de Crédito">
+        <action
+            android:id="@+id/action_creditCards_to_addCreditCard"
+            app:destination="@id/addCreditCardFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addCreditCardFragment"
+        android:name="com.pascm.fintrack.ui.cards.AddCreditCardFragment"
+        android:label="Agregar Tarjeta de Crédito" />
+
+    <fragment
+        android:id="@+id/addDebitCardFragment"
+        android:name="com.pascm.fintrack.ui.cards.AddDebitCardFragment"
+        android:label="Agregar Tarjeta de Débito" />
 </navigation>

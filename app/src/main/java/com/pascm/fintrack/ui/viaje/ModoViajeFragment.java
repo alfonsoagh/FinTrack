@@ -77,6 +77,7 @@ public class ModoViajeFragment extends Fragment {
     }
 
     private void updateViewVisibility() {
+        if (binding == null) return;
         if (hasActiveTrip) {
             binding.noTripView.setVisibility(View.GONE);
             binding.activeTripView.setVisibility(View.VISIBLE);
@@ -84,6 +85,14 @@ public class ModoViajeFragment extends Fragment {
             binding.noTripView.setVisibility(View.VISIBLE);
             binding.activeTripView.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Releer estado al volver a esta pestaña
+        hasActiveTrip = TripPrefs.isActiveTrip(requireContext());
+        updateViewVisibility();
     }
 
     @Override

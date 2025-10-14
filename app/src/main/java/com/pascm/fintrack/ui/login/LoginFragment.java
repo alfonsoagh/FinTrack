@@ -51,7 +51,7 @@ public class LoginFragment extends Fragment {
         });
 
         binding.btnCreateAccount.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Acción simulada: Crear cuenta", Toast.LENGTH_SHORT).show()
+                Navigation.findNavController(v).navigate(R.id.action_login_to_registro)
         );
     }
 
