@@ -268,20 +268,6 @@
         android:label="Agregar Lugar" />
 
     <fragment
-        android:id="@+id/cardsListFragment"
-        android:name="com.pascm.fintrack.ui.cards.CardsListFragment"
-        android:label="Tarjetas">
-        <action
-            android:id="@+id/action_cardsList_to_addCard"
-            app:destination="@id/addCardFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/addCardFragment"
-        android:name="com.pascm.fintrack.ui.cards.AddCardFragment"
-        android:label="Agregar tarjeta" />
-
-    <fragment
         android:id="@+id/debitCardsFragment"
         android:name="com.pascm.fintrack.ui.cards.DebitCardsFragment"
         android:label="Tarjetas de Débito">
