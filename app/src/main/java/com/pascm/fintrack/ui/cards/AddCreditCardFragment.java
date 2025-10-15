@@ -36,6 +36,7 @@ public class AddCreditCardFragment extends Fragment {
     private RadioGroup rgBrand;
 
     // Vista previa
+    private View previewCardMaterial;
     private ConstraintLayout previewCardContainer;
     private TextView previewBankName, previewCardAlias, previewBrandText;
     private TextView previewCardNumber, previewAvailable;
@@ -43,6 +44,9 @@ public class AddCreditCardFragment extends Fragment {
 
     private CreditCard.CardGradient selectedGradient = CreditCard.CardGradient.VIOLET;
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
+
+    private boolean isFormatting = false;
+    private TextWatcher cardNumberWatcher;
 
     @Nullable
     @Override
@@ -58,6 +62,7 @@ public class AddCreditCardFragment extends Fragment {
         setupListeners();
         setupGradientSelector(view);
         updatePreview();
+        updatePreviewGradient(); // Inicializar gradiente por defecto
     }
 
     private void initViews(View view) {
@@ -73,6 +78,7 @@ public class AddCreditCardFragment extends Fragment {
 
         // Preview views
         View previewCard = view.findViewById(R.id.cardPreview);
+        previewCardMaterial = previewCard.findViewById(R.id.previewCardMaterial);
         previewCardContainer = previewCard.findViewById(R.id.previewCardContainer);
         previewBankName = previewCard.findViewById(R.id.previewBankName);
         previewCardAlias = previewCard.findViewById(R.id.previewCardAlias);
@@ -108,20 +114,25 @@ public class AddCreditCardFragment extends Fragment {
 
         edtBankName.addTextChangedListener(previewUpdater);
         edtCardAlias.addTextChangedListener(previewUpdater);
-        edtCardNumber.addTextChangedListener(new TextWatcher() {
+
+        cardNumberWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                formatCardNumber();
-                detectBrand();
-                updatePreview();
+                if (!isFormatting) {
+                    formatCardNumber();
+                    detectBrand();
+                    updatePreview();
+                }
             }
 
             @Override
             public void afterTextChanged(Editable s) {}
-        });
+        };
+        edtCardNumber.addTextChangedListener(cardNumberWatcher);
+
         edtCreditLimit.addTextChangedListener(previewUpdater);
         edtCurrentBalance.addTextChangedListener(previewUpdater);
         edtStatementDay.addTextChangedListener(previewUpdater);
@@ -154,7 +165,9 @@ public class AddCreditCardFragment extends Fragment {
     }
 
     private void formatCardNumber() {
-        if (edtCardNumber == null) return;
+        if (edtCardNumber == null || isFormatting) return;
+
+        isFormatting = true;
         String text = edtCardNumber.getText().toString().replaceAll("\\s", "");
         StringBuilder formatted = new StringBuilder();
 
@@ -166,9 +179,21 @@ public class AddCreditCardFragment extends Fragment {
         }
 
         int selectionStart = edtCardNumber.getSelectionStart();
-        edtCardNumber.removeTextChangedListener(null);
+        int spacesBeforeCursor = 0;
+        String currentText = edtCardNumber.getText().toString();
+        for (int i = 0; i < Math.min(selectionStart, currentText.length()); i++) {
+            if (currentText.charAt(i) == ' ') spacesBeforeCursor++;
+        }
+
         edtCardNumber.setText(formatted.toString());
-        edtCardNumber.setSelection(Math.min(selectionStart, formatted.length()));
+
+        int newPosition = selectionStart;
+        if (formatted.length() > selectionStart && selectionStart > 0) {
+            newPosition = Math.min(selectionStart + (formatted.toString().substring(0, Math.min(formatted.length(), selectionStart + 1)).replaceAll("[^\\s]", "").length() - spacesBeforeCursor), formatted.length());
+        }
+        edtCardNumber.setSelection(Math.min(Math.max(0, newPosition), formatted.length()));
+
+        isFormatting = false;
     }
 
     private void detectBrand() {
@@ -232,16 +257,22 @@ public class AddCreditCardFragment extends Fragment {
     }
 
     private void updatePreviewGradient() {
-        GradientDrawable gradientDrawable = new GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                new int[]{
-                        selectedGradient.getStartColor(),
-                        selectedGradient.getCenterColor(),
-                        selectedGradient.getEndColor()
-                }
-        );
-        gradientDrawable.setCornerRadius(16 * getResources().getDisplayMetrics().density);
-        previewCardContainer.setBackground(gradientDrawable);
+        if (previewCardContainer == null || selectedGradient == null) return;
+
+        try {
+            GradientDrawable gradientDrawable = new GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    new int[]{
+                            selectedGradient.getStartColor(),
+                            selectedGradient.getCenterColor(),
+                            selectedGradient.getEndColor()
+                    }
+            );
+            gradientDrawable.setCornerRadius(16 * getResources().getDisplayMetrics().density);
+            previewCardContainer.setBackground(gradientDrawable);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void saveCard() {

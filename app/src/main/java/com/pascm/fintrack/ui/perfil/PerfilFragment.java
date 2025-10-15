@@ -44,16 +44,16 @@ public class PerfilFragment extends Fragment {
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
-                Navigation.findNavController(view).navigate(R.id.homeFragment);
+                Navigation.findNavController(view).navigate(R.id.action_perfil_to_home);
                 return true;
             } else if (id == R.id.nav_viajes) {
-                Navigation.findNavController(view).navigate(R.id.modoViajeFragment);
+                Navigation.findNavController(view).navigate(R.id.action_perfil_to_modo_viaje);
                 return true;
             } else if (id == R.id.nav_lugares) {
-                Toast.makeText(requireContext(), "Lugares", Toast.LENGTH_SHORT).show();
+                Navigation.findNavController(view).navigate(R.id.action_perfil_to_lugares);
                 return true;
             } else if (id == R.id.nav_reportes) {
-                Toast.makeText(requireContext(), "Reportes", Toast.LENGTH_SHORT).show();
+                Navigation.findNavController(view).navigate(R.id.action_perfil_to_reportes);
                 return true;
             } else if (id == R.id.nav_perfil) {
                 return true; // ya estamos aquí

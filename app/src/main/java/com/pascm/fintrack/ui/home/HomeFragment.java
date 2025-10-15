@@ -65,7 +65,7 @@ public class HomeFragment extends Fragment {
         );
 
         binding.cardLugaresFrecuentes.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.lugaresFragment)
+                Navigation.findNavController(v).navigate(R.id.action_home_to_lugares)
         );
 
         // Bottom navigation
@@ -77,19 +77,19 @@ public class HomeFragment extends Fragment {
                 return true;
             } else if (itemId == R.id.nav_viajes) {
                 // Navigate to Modo Viaje
-                Navigation.findNavController(view).navigate(R.id.modoViajeFragment);
+                Navigation.findNavController(view).navigate(R.id.action_home_to_modo_viaje);
                 return true;
             } else if (itemId == R.id.nav_lugares) {
                 // Navigate to Lugares
-                Navigation.findNavController(view).navigate(R.id.lugaresFragment);
+                Navigation.findNavController(view).navigate(R.id.action_home_to_lugares);
                 return true;
             } else if (itemId == R.id.nav_reportes) {
                 // Navigate to Reportes
-                Navigation.findNavController(view).navigate(R.id.reportesFragment);
+                Navigation.findNavController(view).navigate(R.id.action_home_to_reportes);
                 return true;
             } else if (itemId == R.id.nav_perfil) {
                 // Navigate to Perfil
-                Navigation.findNavController(view).navigate(R.id.perfilFragment);
+                Navigation.findNavController(view).navigate(R.id.action_home_to_perfil);
                 return true;
             }
             return false;

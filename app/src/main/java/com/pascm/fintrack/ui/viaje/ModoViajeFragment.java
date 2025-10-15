@@ -58,18 +58,18 @@ public class ModoViajeFragment extends Fragment {
             int itemId = item.getItemId();
 
             if (itemId == R.id.nav_home) {
-                Navigation.findNavController(view).navigate(R.id.homeFragment);
+                Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_home);
                 return true;
             } else if (itemId == R.id.nav_viajes) {
                 return true;
             } else if (itemId == R.id.nav_lugares) {
-                Navigation.findNavController(view).navigate(R.id.lugaresFragment);
+                Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_lugares);
                 return true;
             } else if (itemId == R.id.nav_reportes) {
                 Toast.makeText(requireContext(), "Reportes", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (itemId == R.id.nav_perfil) {
-                Navigation.findNavController(view).navigate(R.id.perfilFragment);
+                Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_perfil);
                 return true;
             }
             return false;

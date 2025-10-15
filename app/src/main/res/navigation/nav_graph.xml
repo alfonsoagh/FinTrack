@@ -41,7 +41,9 @@
         android:label="Inicio">
         <action
             android:id="@+id/action_home_to_modo_viaje"
-            app:destination="@id/modoViajeFragment" />
+            app:destination="@id/modoViajeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_home_to_agregar_movimiento"
             app:destination="@id/agregarMovimientoFragment" />
@@ -50,13 +52,25 @@
             app:destination="@id/recordatoriosFragment" />
         <action
             android:id="@+id/action_home_to_reportes"
-            app:destination="@id/reportesFragment" />
+            app:destination="@id/reportesFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_home_to_debit_cards"
             app:destination="@id/debitCardsFragment" />
         <action
             android:id="@+id/action_home_to_credit_cards"
             app:destination="@id/creditCardsFragment" />
+        <action
+            android:id="@+id/action_home_to_lugares"
+            app:destination="@id/lugaresFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_home_to_perfil"
+            app:destination="@id/perfilFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <!-- Panel de Admin con menú reducido -->
@@ -79,6 +93,9 @@
         <action
             android:id="@+id/action_adminDashboard_to_adminMetricas"
             app:destination="@id/adminMetricasFragment" />
+        <action
+            android:id="@+id/action_adminDashboard_to_adminAccount"
+            app:destination="@id/adminAccountFragment" />
     </fragment>
 
     <fragment
@@ -107,6 +124,11 @@
         android:label="Métricas" />
 
     <fragment
+        android:id="@+id/adminAccountFragment"
+        android:name="com.pascm.fintrack.ui.admin.AdminAccountFragment"
+        android:label="Cuenta de Administrador" />
+
+    <fragment
         android:id="@+id/modoViajeFragment"
         android:name="com.pascm.fintrack.ui.viaje.ModoViajeFragment"
         android:label="Modo Viaje">
@@ -116,6 +138,21 @@
         <action
             android:id="@+id/action_modo_viaje_to_viaje_activo"
             app:destination="@id/viajeActivoFragment" />
+        <action
+            android:id="@+id/action_modo_viaje_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_modo_viaje_to_lugares"
+            app:destination="@id/lugaresFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_modo_viaje_to_perfil"
+            app:destination="@id/perfilFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment
@@ -147,12 +184,54 @@
     <fragment
         android:id="@+id/reportesFragment"
         android:name="com.pascm.fintrack.ui.reportes.ReportesFragment"
-        android:label="Reportes" />
+        android:label="Reportes">
+        <action
+            android:id="@+id/action_reportes_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_reportes_to_modo_viaje"
+            app:destination="@id/modoViajeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_reportes_to_lugares"
+            app:destination="@id/lugaresFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_reportes_to_perfil"
+            app:destination="@id/perfilFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
 
     <fragment
         android:id="@+id/perfilFragment"
         android:name="com.pascm.fintrack.ui.perfil.PerfilFragment"
-        android:label="Perfil" />
+        android:label="Perfil">
+        <action
+            android:id="@+id/action_perfil_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_perfil_to_modo_viaje"
+            app:destination="@id/modoViajeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_perfil_to_lugares"
+            app:destination="@id/lugaresFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_perfil_to_reportes"
+            app:destination="@id/reportesFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+    </fragment>
 
     <fragment
         android:id="@+id/lugaresFragment"
@@ -161,6 +240,26 @@
         <action
             android:id="@+id/action_lugares_to_agregar_lugar"
             app:destination="@id/agregarLugarFragment" />
+        <action
+            android:id="@+id/action_lugares_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_lugares_to_modo_viaje"
+            app:destination="@id/modoViajeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_lugares_to_reportes"
+            app:destination="@id/reportesFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_lugares_to_perfil"
+            app:destination="@id/perfilFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment

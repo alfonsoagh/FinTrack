@@ -50,11 +50,11 @@ public class AdminDashboardFragment extends Fragment {
             );
         }
 
-        // Botón de tema (opcional - implementar cambio de tema)
+        // Botón de configuración de cuenta
         if (btnTheme != null) {
-            btnTheme.setOnClickListener(v -> {
-                // TODO: Implementar cambio de tema dark/light
-            });
+            btnTheme.setOnClickListener(v ->
+                    Navigation.findNavController(view).navigate(R.id.action_adminDashboard_to_adminAccount)
+            );
         }
     }
 }

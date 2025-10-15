@@ -61,22 +61,22 @@ public class LugaresFragment extends Fragment {
 
             if (itemId == R.id.nav_home) {
                 // Navigate to Home
-                Navigation.findNavController(view).navigate(R.id.homeFragment);
+                Navigation.findNavController(view).navigate(R.id.action_lugares_to_home);
                 return true;
             } else if (itemId == R.id.nav_viajes) {
                 // Navigate to Viajes
-                Navigation.findNavController(view).navigate(R.id.modoViajeFragment);
+                Navigation.findNavController(view).navigate(R.id.action_lugares_to_modo_viaje);
                 return true;
             } else if (itemId == R.id.nav_lugares) {
                 // Already on lugares
                 return true;
             } else if (itemId == R.id.nav_reportes) {
                 // Navigate to Reportes
-                Navigation.findNavController(view).navigate(R.id.reportesFragment);
+                Navigation.findNavController(view).navigate(R.id.action_lugares_to_reportes);
                 return true;
             } else if (itemId == R.id.nav_perfil) {
                 // Navigate to Perfil
-                Navigation.findNavController(view).navigate(R.id.perfilFragment);
+                Navigation.findNavController(view).navigate(R.id.action_lugares_to_perfil);
                 return true;
             }
             return false;
