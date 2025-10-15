@@ -15,11 +15,15 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.pascm.fintrack.R;
+import com.pascm.fintrack.data.repository.UserRepository;
 import com.pascm.fintrack.databinding.FragmentRegistroBinding;
+import com.pascm.fintrack.util.SessionManager;
+import com.pascm.fintrack.util.PlacesManager;
 
 public class RegistroFragment extends Fragment {
 
     private FragmentRegistroBinding binding;
+    private UserRepository userRepository;
 
     public RegistroFragment() { /* Required empty public constructor */ }
 
@@ -34,6 +38,9 @@ public class RegistroFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialize repository
+        userRepository = new UserRepository(requireContext());
+
         // Configurar el dropdown de monedas
         String[] currencies = {"MXN", "USD", "EUR"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -42,6 +49,7 @@ public class RegistroFragment extends Fragment {
                 currencies
         );
         binding.actvMoneda.setAdapter(adapter);
+        binding.actvMoneda.setText("MXN", false); // Default value
 
         // Botón de regresar
         binding.btnBack.setOnClickListener(v ->
@@ -130,16 +138,38 @@ public class RegistroFragment extends Fragment {
         String email = String.valueOf(binding.edtEmail.getText()).trim();
         String password = String.valueOf(binding.edtPassword.getText()).trim();
         String moneda = String.valueOf(binding.actvMoneda.getText()).trim();
+        if (moneda.isEmpty()) moneda = "MXN";
 
-        // TODO: Aquí implementarías la lógica real de registro
-        // Por ahora, solo mostramos un mensaje y volvemos al login
+        // Disable button while registering
+        binding.btnCrearCuenta.setEnabled(false);
+        binding.btnCrearCuenta.setText("Creando cuenta...");
 
-        Toast.makeText(requireContext(),
-                "Cuenta creada exitosamente para " + nombre,
-                Toast.LENGTH_LONG).show();
+        // Register user
+        String finalMoneda = moneda;
+        userRepository.registerUser(email, password, result -> {
+            requireActivity().runOnUiThread(() -> {
+                binding.btnCrearCuenta.setEnabled(true);
+                binding.btnCrearCuenta.setText("Crear cuenta");
 
-        // Navegar de regreso al login
-        Navigation.findNavController(requireView()).navigateUp();
+                if (result.isSuccess()) {
+                    // Guardar sesión con nombre
+                    SessionManager.login(requireContext(), result.getUser(), nombre);
+
+                    // Resetear Lugares para demo: siempre iniciar sin lugares
+                    PlacesManager.setHasPlaces(requireContext(), false);
+
+                    Toast.makeText(requireContext(),
+                            "Cuenta creada exitosamente. ¡Bienvenido!",
+                            Toast.LENGTH_LONG).show();
+
+                    // Navigate to home (user is now logged in)
+                    Navigation.findNavController(requireView()).navigate(R.id.action_registro_to_home);
+                } else {
+                    // Show error
+                    Toast.makeText(requireContext(), result.getErrorMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        });
     }
 
     @Override

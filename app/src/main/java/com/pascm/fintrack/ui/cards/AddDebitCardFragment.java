@@ -22,8 +22,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.model.CreditCard;
+import com.pascm.fintrack.util.SessionManager;
+import com.pascm.fintrack.data.local.FinTrackDatabase;
+import com.pascm.fintrack.data.local.dao.AccountDao;
+import com.pascm.fintrack.data.local.entity.Account;
+import com.pascm.fintrack.data.local.entity.DebitCardEntity;
+import com.pascm.fintrack.data.repository.CardRepository;
 
 import java.text.NumberFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -265,8 +272,82 @@ public class AddDebitCardFragment extends Fragment {
             return;
         }
 
-        // TODO: Guardar la tarjeta en preferencias o base de datos
-        Toast.makeText(requireContext(), "Tarjeta de débito registrada exitosamente", Toast.LENGTH_SHORT).show();
-        Navigation.findNavController(requireView()).navigateUp();
+        String bankName = edtBankName.getText().toString().trim();
+        String alias = edtCardAlias.getText() != null ? edtCardAlias.getText().toString().trim() : "";
+        String cardNumber = edtCardNumber.getText().toString().replaceAll("\\s", "");
+        String last4 = cardNumber.length() >= 4 ? cardNumber.substring(cardNumber.length() - 4) : "0000";
+
+        int checkedId = rgBrand.getCheckedRadioButtonId();
+        String brand = "visa";
+        if (checkedId == R.id.rbMastercard) brand = "mastercard";
+        else if (checkedId == R.id.rbAmex) brand = "amex";
+        else if (checkedId == R.id.rbOther) brand = "other";
+
+        long userId = SessionManager.getUserId(requireContext());
+        if (userId <= 0) {
+            Toast.makeText(requireContext(), "Sesión no válida", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Variables finales para usar dentro de la lambda
+        final String finalBankName = bankName;
+        final String finalAlias = alias;
+        final String finalLast4 = last4;
+        final String finalBrand = brand;
+        final CreditCard.CardGradient finalGradient = selectedGradient;
+        final long finalUserId = userId;
+
+        // Ejecutar guardado en hilo de fondo
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
+                AccountDao accountDao = db.accountDao();
+
+                // Obtener o crear cuenta por defecto
+                long accountId;
+                List<Account> accounts = accountDao.getAllByUserSync(finalUserId);
+                if (accounts == null || accounts.isEmpty()) {
+                    Account acc = new Account();
+                    acc.setUserId(finalUserId);
+                    acc.setName("Cuenta de Débito");
+                    acc.setType(Account.AccountType.CHECKING);
+                    acc.setCurrencyCode("MXN");
+                    acc.setBalance(0);
+                    acc.setAvailable(0);
+                    acc.setCreatedAt(Instant.now());
+                    acc.setUpdatedAt(Instant.now());
+                    accountId = accountDao.insert(acc);
+                } else {
+                    accountId = accounts.get(0).getAccountId();
+                }
+
+                // Crear entidad de tarjeta de débito
+                DebitCardEntity card = new DebitCardEntity();
+                card.setUserId(finalUserId);
+                card.setAccountId(accountId);
+                card.setIssuer(finalBankName);
+                card.setLabel(finalAlias.isEmpty() ? "Débito" : finalAlias);
+                card.setBrand(finalBrand);
+                card.setPanLast4(finalLast4);
+                card.setGradient(finalGradient.name());
+                card.setPrimary(false);
+                card.setActive(true);
+                card.setArchived(false);
+                card.setCreatedAt(Instant.now());
+                card.setUpdatedAt(Instant.now());
+
+                // Insertar via repositorio
+                new CardRepository(requireContext()).insertDebitCard(card);
+
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Tarjeta de débito registrada", Toast.LENGTH_SHORT).show();
+                    Navigation.findNavController(requireView()).navigateUp();
+                });
+            } catch (Exception e) {
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "Error al guardar: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                );
+            }
+        });
     }
 }

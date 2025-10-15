@@ -14,15 +14,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pascm.fintrack.R;
+import com.pascm.fintrack.data.local.entity.CreditCardEntity;
+import com.pascm.fintrack.data.repository.CardRepository;
 import com.pascm.fintrack.model.CreditCard;
+import com.pascm.fintrack.util.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CreditCardsFragment extends Fragment {
 
     private RecyclerView rvCreditCards;
     private CreditCardAdapter adapter;
+    private CardRepository cardRepository;
 
     @Nullable
     @Override
@@ -34,56 +39,50 @@ public class CreditCardsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Configurar botón de cerrar
+        // Repository
+        cardRepository = new CardRepository(requireContext());
+
+        // User ID
+        long userId = SessionManager.getUserId(requireContext());
+
+        // Botón cerrar
         View btnClose = view.findViewById(R.id.btnClose);
-        btnClose.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        }
 
-        // Configurar FAB de agregar
-        view.findViewById(R.id.fabAddCard).setOnClickListener(v ->
-                Navigation.findNavController(view).navigate(R.id.action_creditCards_to_addCreditCard)
-        );
+        // FAB agregar
+        View fabAdd = view.findViewById(R.id.fabAddCard);
+        if (fabAdd != null) {
+            fabAdd.setOnClickListener(v ->
+                    Navigation.findNavController(view).navigate(R.id.action_creditCards_to_addCreditCard)
+            );
+        }
 
-        // Configurar RecyclerView
+        // RecyclerView
         rvCreditCards = view.findViewById(R.id.rvCreditCards);
         rvCreditCards.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         adapter = new CreditCardAdapter();
-        adapter.setOnCardClickListener(card -> {
-            Toast.makeText(requireContext(),
-                "Tarjeta: " + card.getBank() + " - " + card.getLabel(),
-                Toast.LENGTH_SHORT).show();
-            // TODO: Navegar a detalles de la tarjeta cuando esté implementado
-        });
-
+        adapter.setOnCardClickListener(card ->
+                Toast.makeText(requireContext(), "Tarjeta: " + card.getBank() + " - " + card.getLabel(), Toast.LENGTH_SHORT).show()
+        );
         rvCreditCards.setAdapter(adapter);
 
-        // Cargar datos de ejemplo
-        loadSampleData();
+        // Cargar tarjetas
+        observeCards(userId);
     }
 
-    private void loadSampleData() {
-        List<CreditCard> cards = new ArrayList<>();
-
-        cards.add(new CreditCard(
-                "Banco Santander",
-                "Tarjeta de Viajes",
-                "mastercard",
-                "1234",
-                20000,
-                5250,
-                CreditCard.CardGradient.VIOLET
-        ));
-
-        cards.add(new CreditCard(
-                "BBVA",
-                "Tarjeta de Compras",
-                "visa",
-                "5678",
-                15000,
-                14500,
-                CreditCard.CardGradient.CRIMSON
-        ));
-
-        adapter.setCards(cards);
+    private void observeCards(long userId) {
+        cardRepository.getAllCreditCards(userId).observe(getViewLifecycleOwner(), entities -> {
+            if (entities != null && !entities.isEmpty()) {
+                List<CreditCard> cards = entities.stream()
+                        .map(CreditCardEntity::toModel)
+                        .collect(Collectors.toList());
+                adapter.setCards(cards);
+            } else {
+                adapter.setCards(new ArrayList<>());
+            }
+        });
     }
 }

@@ -21,7 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.pascm.fintrack.R;
+import com.pascm.fintrack.data.local.entity.CreditCardEntity;
+import com.pascm.fintrack.data.repository.CardRepository;
 import com.pascm.fintrack.model.CreditCard;
+import com.pascm.fintrack.util.SessionManager;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -29,6 +32,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class AddCreditCardFragment extends Fragment {
+
+    private CardRepository cardRepository;
 
     private TextInputEditText edtBankName, edtCardAlias, edtCardNumber;
     private TextInputEditText edtCreditLimit, edtCurrentBalance;
@@ -57,6 +62,9 @@ public class AddCreditCardFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Initialize repository
+        cardRepository = new CardRepository(requireContext());
 
         initViews(view);
         setupListeners();
@@ -282,12 +290,83 @@ public class AddCreditCardFragment extends Fragment {
             return;
         }
 
+        if (edtCardAlias.getText() == null || edtCardAlias.getText().toString().trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Ingresa un alias para la tarjeta", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (edtCardNumber.getText() == null || edtCardNumber.getText().toString().replaceAll("\\s", "").length() < 4) {
             Toast.makeText(requireContext(), "Ingresa un número de tarjeta válido", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // TODO: Guardar la tarjeta en preferencias o base de datos
+        // Extraer valores del formulario
+        String bankName = edtBankName.getText().toString().trim();
+        String alias = edtCardAlias.getText().toString().trim();
+        String cardNumber = edtCardNumber.getText().toString().replaceAll("\\s", "");
+        String last4 = cardNumber.length() >= 4 ? cardNumber.substring(cardNumber.length() - 4) : "0000";
+
+        // Determinar brand
+        int checkedId = rgBrand.getCheckedRadioButtonId();
+        String brand = "visa"; // Default
+        if (checkedId == R.id.rbMastercard) brand = "mastercard";
+        else if (checkedId == R.id.rbAmex) brand = "amex";
+        else if (checkedId == R.id.rbOther) brand = "other";
+
+        // Parsear límite y balance
+        double creditLimit = 0;
+        double currentBalance = 0;
+        try {
+            if (edtCreditLimit.getText() != null && !edtCreditLimit.getText().toString().trim().isEmpty()) {
+                creditLimit = Double.parseDouble(edtCreditLimit.getText().toString().replaceAll("[^0-9.]", ""));
+            }
+            if (edtCurrentBalance.getText() != null && !edtCurrentBalance.getText().toString().trim().isEmpty()) {
+                currentBalance = Double.parseDouble(edtCurrentBalance.getText().toString().replaceAll("[^0-9.]", ""));
+            }
+        } catch (NumberFormatException e) {
+            Toast.makeText(requireContext(), "Verifica los montos ingresados", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Parsear días de corte y pago (opcionales)
+        Integer statementDay = null;
+        Integer dueDay = null;
+        try {
+            if (edtStatementDay.getText() != null && !edtStatementDay.getText().toString().trim().isEmpty()) {
+                statementDay = Integer.parseInt(edtStatementDay.getText().toString().trim());
+                if (statementDay < 1 || statementDay > 31) {
+                    Toast.makeText(requireContext(), "Día de corte debe estar entre 1 y 31", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+            if (edtDueDay.getText() != null && !edtDueDay.getText().toString().trim().isEmpty()) {
+                dueDay = Integer.parseInt(edtDueDay.getText().toString().trim());
+                if (dueDay < 1 || dueDay > 31) {
+                    Toast.makeText(requireContext(), "Día de pago debe estar entre 1 y 31", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        } catch (NumberFormatException e) {
+            Toast.makeText(requireContext(), "Verifica los días de corte y pago", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Crear entidad de tarjeta
+        CreditCardEntity card = new CreditCardEntity();
+        card.setUserId(SessionManager.getUserId(requireContext()));
+        card.setIssuer(bankName);
+        card.setLabel(alias);
+        card.setBrand(brand);
+        card.setPanLast4(last4);
+        card.setCreditLimit(creditLimit);
+        card.setCurrentBalance(currentBalance);
+        card.setStatementDay(statementDay);
+        card.setPaymentDueDay(dueDay);
+        card.setGradient(selectedGradient.name());
+
+        // Guardar en la base de datos
+        cardRepository.insertCreditCard(card);
+
         Toast.makeText(requireContext(), "Tarjeta registrada exitosamente", Toast.LENGTH_SHORT).show();
         Navigation.findNavController(requireView()).navigateUp();
     }

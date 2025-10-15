@@ -33,7 +33,13 @@
     <fragment
         android:id="@+id/registroFragment"
         android:name="com.pascm.fintrack.ui.login.RegistroFragment"
-        android:label="Crear cuenta" />
+        android:label="Crear cuenta">
+        <action
+            android:id="@+id/action_registro_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/homeFragment"
