@@ -43,4 +43,10 @@
         <item name="android:color">@android:color/transparent</item>
     </style>
 
+    <!-- Estilo para imagen circular -->
+    <style name="CircleImageView">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
 </resources>

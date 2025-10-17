@@ -180,7 +180,16 @@
     <fragment
         android:id="@+id/agregarMovimientoFragment"
         android:name="com.pascm.fintrack.ui.movimiento.AgregarMovimientoFragment"
-        android:label="Nuevo movimiento" />
+        android:label="Nuevo movimiento">
+        <action
+            android:id="@+id/action_agregar_movimiento_to_transferencia"
+            app:destination="@id/transferenciaFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/transferenciaFragment"
+        android:name="com.pascm.fintrack.ui.movimiento.TransferenciaFragment"
+        android:label="Transferencia" />
 
     <fragment
         android:id="@+id/recordatoriosFragment"
@@ -241,7 +250,7 @@
 
     <fragment
         android:id="@+id/lugaresFragment"
-        android:name="com.pascm.fintrack.ui.lugares.LugaresFragment"
+        android:name="com.pascm.fintrack.ui.lugar.LugaresFragment"
         android:label="Lugares">
         <action
             android:id="@+id/action_lugares_to_agregar_lugar"
@@ -270,7 +279,7 @@
 
     <fragment
         android:id="@+id/agregarLugarFragment"
-        android:name="com.pascm.fintrack.ui.lugares.AgregarLugarFragment"
+        android:name="com.pascm.fintrack.ui.lugar.AgregarLugarFragment"
         android:label="Agregar Lugar" />
 
     <fragment

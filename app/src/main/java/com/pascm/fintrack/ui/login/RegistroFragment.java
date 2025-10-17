@@ -144,22 +144,22 @@ public class RegistroFragment extends Fragment {
         binding.btnCrearCuenta.setEnabled(false);
         binding.btnCrearCuenta.setText("Creando cuenta...");
 
-        // Register user
+        // Register user con el nombre completo
         String finalMoneda = moneda;
-        userRepository.registerUser(email, password, result -> {
+        userRepository.registerUser(email, password, nombre, result -> {
             requireActivity().runOnUiThread(() -> {
                 binding.btnCrearCuenta.setEnabled(true);
                 binding.btnCrearCuenta.setText("Crear cuenta");
 
                 if (result.isSuccess()) {
-                    // Guardar sesión con nombre
-                    SessionManager.login(requireContext(), result.getUser(), nombre);
+                    // Guardar sesión
+                    SessionManager.login(requireContext(), result.getUser());
 
                     // Resetear Lugares para demo: siempre iniciar sin lugares
                     PlacesManager.setHasPlaces(requireContext(), false);
 
                     Toast.makeText(requireContext(),
-                            "Cuenta creada exitosamente. ¡Bienvenido!",
+                            "Cuenta creada exitosamente. ¡Bienvenido " + nombre + "!",
                             Toast.LENGTH_LONG).show();
 
                     // Navigate to home (user is now logged in)

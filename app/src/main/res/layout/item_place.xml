@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="6dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header con ícono y nombre -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Icono de lugar -->
+            <ImageView
+                android:id="@+id/img_place_icon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_primary_circle"
+                android:contentDescription="Place icon"
+                android:padding="12dp"
+                android:src="@drawable/ic_location"
+                app:tint="@color/primary"
+                tools:ignore="HardcodedText" />
+
+            <!-- Información del lugar -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <!-- Nombre del lugar -->
+                <TextView
+                    android:id="@+id/txt_place_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Walmart Centro" />
+
+                <!-- Dirección (opcional) -->
+                <TextView
+                    android:id="@+id/txt_place_address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/on_surface_variant"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    tools:text="Av. Insurgentes Sur 1458"
+                    tools:visibility="visible" />
+            </LinearLayout>
+
+            <!-- Indicador de favorito -->
+            <ImageView
+                android:id="@+id/img_frequent_badge"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Lugar frecuente"
+                android:src="@drawable/ic_paid"
+                android:visibility="gone"
+                app:tint="@color/secondary"
+                tools:ignore="HardcodedText"
+                tools:visibility="visible" />
+        </LinearLayout>
+
+        <!-- Coordenadas (opcional) -->
+        <TextView
+            android:id="@+id/txt_place_coordinates"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:drawablePadding="4dp"
+            android:fontFamily="monospace"
+            android:textColor="@color/on_surface_variant"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_map"
+            app:drawableTint="@color/on_surface_variant"
+            tools:text="19.432608, -99.133209"
+            tools:visibility="visible" />
+
+        <!-- Contador de uso -->
+        <TextView
+            android:id="@+id/txt_usage_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:drawablePadding="4dp"
+            android:textColor="@color/on_surface_variant"
+            android:textSize="12sp"
+            app:drawableStartCompat="@drawable/ic_check"
+            app:drawableTint="@color/on_surface_variant"
+            tools:text="Usado 5 veces" />
+
+        <!-- Botones de acción -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_edit_place"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/surface_variant"
+                android:text="Editar"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="8dp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/btn_delete_place"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:backgroundTint="#FFEBEE"
+                android:text="Eliminar"
+                android:textColor="#C62828"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:cornerRadius="8dp"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

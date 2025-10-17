@@ -28,7 +28,7 @@ public class UserRepository {
 
     // ========== Autenticación ==========
 
-    public void registerUser(String email, String password, AuthCallback callback) {
+    public void registerUser(String email, String password, String fullName, AuthCallback callback) {
         FinTrackDatabase.databaseWriteExecutor.execute(() -> {
             try {
                 if (!isValidEmail(email)) {
@@ -59,10 +59,10 @@ public class UserRepository {
                 long userId = userDao.insert(user);
                 user.setUserId(userId);
 
-                // Crear perfil por defecto
+                // Crear perfil por defecto con el nombre completo proporcionado
                 UserProfile profile = new UserProfile();
                 profile.setUserId(userId);
-                profile.setFullName(extractNameFromEmail(email));
+                profile.setFullName(fullName != null && !fullName.trim().isEmpty() ? fullName.trim() : extractNameFromEmail(email));
                 profile.setLanguage("es");
                 profile.setDefaultCurrency("MXN");
                 profile.setTheme(UserProfile.Theme.LIGHT);

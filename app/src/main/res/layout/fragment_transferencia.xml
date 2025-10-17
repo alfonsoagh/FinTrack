@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header con botón cerrar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/background_light"
+            android:elevation="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <ImageButton
+                android:id="@+id/btn_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/close"
+                android:src="@drawable/ic_close"
+                app:tint="?attr/colorOnSurface" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:paddingEnd="40dp"
+                android:text="Transferencia"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:ignore="RtlSymmetry" />
+        </LinearLayout>
+
+        <!-- Main Content -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Descripción -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="Transfiere dinero entre tus propias cuentas y tarjetas"
+                android:textAlignment="center"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="14sp" />
+
+            <!-- Monto -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
+                    android:text="$"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="48sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/et_amount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:fontFamily="sans-serif-light"
+                    android:gravity="end"
+                    android:hint="0"
+                    android:inputType="numberDecimal"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textColorHint="@color/on_surface_variant"
+                    android:textSize="48sp"
+                    android:textStyle="bold"
+                    tools:ignore="Autofill,LabelFor" />
+            </LinearLayout>
+
+            <!-- Desde (Origen) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
+                android:text="Desde"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/surface_variant"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_primary_circle"
+                        android:contentDescription="Desde"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_credit_card_small"
+                        app:tint="@color/primary" />
+
+                    <Spinner
+                        android:id="@+id/spinner_from"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:textColor="?attr/colorOnSurface" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Icono de transferencia -->
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:layout_marginVertical="12dp"
+                android:src="@drawable/ic_chevron_down"
+                app:tint="@color/primary" />
+
+            <!-- Hacia (Destino) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Hacia"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/surface_variant"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_primary_circle"
+                        android:contentDescription="Hacia"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_credit_card_small"
+                        app:tint="@color/primary" />
+
+                    <Spinner
+                        android:id="@+id/spinner_to"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:textColor="?attr/colorOnSurface" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Fecha -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface_variant"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_primary_circle"
+                        android:contentDescription="@string/fecha"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_calendar"
+                        app:tint="@color/primary" />
+
+                    <TextView
+                        android:id="@+id/tv_date"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="@string/hoy"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Nota -->
+            <EditText
+                android:id="@+id/et_note"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_rounded_input"
+                android:gravity="top|start"
+                android:hint="@string/nota_opcional"
+                android:inputType="textMultiLine"
+                android:padding="12dp"
+                android:textColor="?attr/colorOnSurface"
+                android:textColorHint="@color/on_surface_variant"
+                android:textSize="16sp"
+                tools:ignore="Autofill" />
+
+            <!-- Botón transferir -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_transfer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="24dp"
+                android:paddingVertical="14dp"
+                android:text="Realizar Transferencia"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -111,6 +111,18 @@ public class CardRepository {
     }
 
     /**
+     * Get a single credit card by ID (synchronous).
+     *
+     * WARNING: Don't call on main thread!
+     *
+     * @param cardId Card ID
+     * @return Credit card entity or null
+     */
+    public CreditCardEntity getCreditCardByIdSync(long cardId) {
+        return creditCardDao.getByIdSync(cardId);
+    }
+
+    /**
      * Get total credit limit across all cards (LiveData).
      *
      * @param userId User ID
@@ -370,6 +382,18 @@ public class CardRepository {
      */
     public LiveData<DebitCardEntity> getDebitCardById(long cardId) {
         return debitCardDao.getById(cardId);
+    }
+
+    /**
+     * Get a single debit card by ID (synchronous).
+     *
+     * WARNING: Don't call on main thread!
+     *
+     * @param cardId Card ID
+     * @return Debit card entity or null
+     */
+    public DebitCardEntity getDebitCardByIdSync(long cardId) {
+        return debitCardDao.getByIdSync(cardId);
     }
 
     /**

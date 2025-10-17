@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 public class CreditCardsFragment extends Fragment {
 
     private RecyclerView rvCreditCards;
+    private View emptyStateContainer;
     private CreditCardAdapter adapter;
     private CardRepository cardRepository;
 
@@ -59,6 +60,9 @@ public class CreditCardsFragment extends Fragment {
             );
         }
 
+        // Empty state container
+        emptyStateContainer = view.findViewById(R.id.emptyStateContainer);
+
         // RecyclerView
         rvCreditCards = view.findViewById(R.id.rvCreditCards);
         rvCreditCards.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -80,9 +84,29 @@ public class CreditCardsFragment extends Fragment {
                         .map(CreditCardEntity::toModel)
                         .collect(Collectors.toList());
                 adapter.setCards(cards);
+                showContent();
             } else {
                 adapter.setCards(new ArrayList<>());
+                showEmptyState();
             }
         });
+    }
+
+    private void showEmptyState() {
+        if (emptyStateContainer != null) {
+            emptyStateContainer.setVisibility(View.VISIBLE);
+        }
+        if (rvCreditCards != null) {
+            rvCreditCards.setVisibility(View.GONE);
+        }
+    }
+
+    private void showContent() {
+        if (emptyStateContainer != null) {
+            emptyStateContainer.setVisibility(View.GONE);
+        }
+        if (rvCreditCards != null) {
+            rvCreditCards.setVisibility(View.VISIBLE);
+        }
     }
 }

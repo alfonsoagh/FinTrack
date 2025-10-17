@@ -161,8 +161,9 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Cuenta -->
+            <!-- Cuenta/Origen (para Ingreso/Gasto/Transferencia) -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_account"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -187,15 +188,83 @@
                         android:src="@drawable/ic_credit_card_small"
                         app:tint="@color/primary" />
 
-                    <Spinner
-                        android:id="@+id/spinner_account"
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:background="@null"
-                        android:entries="@array/accounts"
-                        android:textColor="?attr/colorOnSurface" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_account_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/cuenta"
+                            android:textColor="@color/on_surface_variant"
+                            android:textSize="12sp"
+                            android:visibility="gone" />
+
+                        <Spinner
+                            android:id="@+id/spinner_account"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@null"
+                            android:entries="@array/accounts"
+                            android:textColor="?attr/colorOnSurface" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Cuenta Destino (solo visible para Transferencia) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_account_to"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/surface_variant"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_primary_circle"
+                        android:contentDescription="Hacia"
+                        android:padding="8dp"
+                        android:src="@drawable/ic_credit_card_small"
+                        app:tint="@color/primary" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Hacia"
+                            android:textColor="@color/on_surface_variant"
+                            android:textSize="12sp" />
+
+                        <Spinner
+                            android:id="@+id/spinner_account_to"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@null"
+                            android:entries="@array/accounts"
+                            android:textColor="?attr/colorOnSurface" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

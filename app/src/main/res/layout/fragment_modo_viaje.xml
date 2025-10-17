@@ -91,19 +91,84 @@
             </LinearLayout>
 
             <!-- Active Trip View -->
-            <ScrollView
+            <androidx.core.widget.NestedScrollView
                 android:id="@+id/active_trip_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="16dp"
+                android:fillViewport="true"
                 android:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="16dp">
 
-                    <!-- Trip Info Card -->
+                    <!-- Itinerario Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:padding="16dp">
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/itinerario"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/txt_trip_route"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:text="@string/cdmx_cancun"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textSize="18sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/txt_trip_dates"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/fecha_viaje"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:textSize="10sp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:background="@drawable/bg_status_active"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="6dp"
+                                android:text="@string/active"
+                                android:textColor="#047857"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Presupuesto Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -119,162 +184,253 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <!-- Trip Title and Status -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginBottom="12dp"
-                                android:gravity="center_vertical"
                                 android:orientation="horizontal">
 
                                 <TextView
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="@string/trip_to_coast"
+                                    android:text="@string/presupuesto_mxn"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/txt_budget_total"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="$5,000"
                                     android:textColor="?attr/colorOnSurface"
-                                    android:textSize="20sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:background="@drawable/bg_status_active"
-                                    android:paddingHorizontal="12dp"
-                                    android:paddingVertical="4dp"
-                                    android:text="@string/active"
-                                    android:textColor="#065F46"
-                                    android:textSize="12sp"
+                                    android:textSize="14sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
 
-                            <!-- Trip Details -->
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="16dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/currency_mxn"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginHorizontal="8dp"
-                                    android:text="·"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/ciudad_mexico"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:textSize="14sp" />
-
-                                <ImageView
-                                    android:layout_width="20dp"
-                                    android:layout_height="20dp"
-                                    android:layout_marginHorizontal="4dp"
-                                    android:contentDescription="@string/to"
-                                    android:src="@drawable/ic_arrow_right"
-                                    app:tint="?attr/colorOnSurfaceVariant" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/cancun"
-                                    android:textColor="?attr/colorOnSurfaceVariant"
-                                    android:textSize="14sp" />
-                            </LinearLayout>
-
-                            <!-- Budget Progress -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical">
+                                android:layout_marginTop="12dp"
+                                android:orientation="horizontal">
 
-                                <LinearLayout
-                                    android:layout_width="match_parent"
+                                <TextView
+                                    android:layout_width="0dp"
                                     android:layout_height="wrap_content"
-                                    android:layout_marginBottom="4dp"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
+                                    android:layout_weight="1"
+                                    android:text="@string/gastado"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:textSize="14sp" />
 
-                                    <TextView
-                                        android:layout_width="0dp"
-                                        android:layout_height="wrap_content"
-                                        android:layout_weight="1"
-                                        android:text="@string/budget"
-                                        android:textColor="?attr/colorOnSurfaceVariant"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
+                                <TextView
+                                    android:id="@+id/txt_budget_spent"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="$1,250"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
 
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="@string/budget_progress"
-                                        android:textColor="?attr/colorOnSurface"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
+                            <ProgressBar
+                                android:id="@+id/progress_budget"
+                                android:layout_width="match_parent"
+                                android:layout_height="10dp"
+                                android:layout_marginTop="12dp"
+                                android:max="100"
+                                android:progress="25"
+                                android:progressDrawable="@drawable/progress_bar"
+                                style="@style/Widget.AppCompat.ProgressBar.Horizontal" />
 
-                                <ProgressBar
-                                    android:layout_width="match_parent"
-                                    android:layout_height="10dp"
-                                    android:max="100"
-                                    android:progress="25"
-                                    android:progressDrawable="@drawable/progress_bar"
-                                    style="?android:attr/progressBarStyleHorizontal" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/restante"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/txt_budget_remaining"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="$3,750"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textSize="14sp"
+                                    android:textStyle="bold" />
                             </LinearLayout>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Trip Image -->
-                    <com.google.android.material.card.MaterialCardView
+                    <!-- Stats Grid -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="200dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="0dp">
+                        android:orientation="horizontal"
+                        android:weightSum="3">
 
-                        <ImageView
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_rounded_input"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/dias_restantes"
+                                android:textAlignment="center"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/txt_days_remaining"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="3"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_rounded_input"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/transacciones"
+                                android:textAlignment="center"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/txt_transaction_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="12"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_rounded_input"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/top_categoria"
+                                android:textAlignment="center"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/txt_top_category"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Comida"
+                                android:textColor="?attr/colorOnSurface"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Gastos recientes -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:text="@string/gastos_recientes"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <!-- RecyclerView for recent transactions -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_recent_transactions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:nestedScrollingEnabled="false" />
+
+                    <!-- Buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:contentDescription="@string/trip_image"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/img_trip_placeholder" />
-                    </com.google.android.material.card.MaterialCardView>
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:orientation="horizontal">
 
-                    <!-- View Details Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_view_details"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:paddingVertical="12dp"
-                        android:text="@string/view_trip_details"
-                        app:icon="@drawable/ic_visibility"
-                        app:iconGravity="textStart" />
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_end_trip"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_marginEnd="8dp"
+                                android:layout_weight="1"
+                                android:text="@string/finalizar_viaje"
+                                android:textSize="14sp"
+                                app:cornerRadius="12dp" />
 
-                    <!-- End Trip Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_end_trip"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="#EF4444"
-                        android:paddingVertical="12dp"
-                        android:text="@string/end_trip"
-                        app:cornerRadius="8dp" />
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_view_map"
+                                android:layout_width="0dp"
+                                android:layout_height="56dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:backgroundTint="@android:color/transparent"
+                                android:text="@string/ver_mapa"
+                                android:textColor="@color/primary"
+                                android:textSize="14sp"
+                                app:cornerRadius="12dp"
+                                app:strokeColor="@color/primary"
+                                app:strokeWidth="2dp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_export_csv"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:backgroundTint="@android:color/transparent"
+                            android:text="@string/exportar_csv"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="14sp"
+                            app:cornerRadius="12dp"
+                            app:strokeColor="?attr/colorOnSurfaceVariant"
+                            app:strokeWidth="1dp" />
+                    </LinearLayout>
                 </LinearLayout>
-            </ScrollView>
+            </androidx.core.widget.NestedScrollView>
         </FrameLayout>
     </LinearLayout>
 

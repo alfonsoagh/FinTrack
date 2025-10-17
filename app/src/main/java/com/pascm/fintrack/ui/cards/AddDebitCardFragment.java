@@ -289,6 +289,16 @@ public class AddDebitCardFragment extends Fragment {
             return;
         }
 
+        // Obtener el saldo inicial ingresado
+        double initialBalance = 0;
+        try {
+            if (edtCurrentBalance.getText() != null && !edtCurrentBalance.getText().toString().trim().isEmpty()) {
+                initialBalance = Double.parseDouble(edtCurrentBalance.getText().toString().replaceAll("[^0-9.]", ""));
+            }
+        } catch (NumberFormatException e) {
+            initialBalance = 0;
+        }
+
         // Variables finales para usar dentro de la lambda
         final String finalBankName = bankName;
         final String finalAlias = alias;
@@ -296,6 +306,7 @@ public class AddDebitCardFragment extends Fragment {
         final String finalBrand = brand;
         final CreditCard.CardGradient finalGradient = selectedGradient;
         final long finalUserId = userId;
+        final double finalInitialBalance = initialBalance;
 
         // Ejecutar guardado en hilo de fondo
         FinTrackDatabase.databaseWriteExecutor.execute(() -> {
@@ -303,23 +314,17 @@ public class AddDebitCardFragment extends Fragment {
                 FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
                 AccountDao accountDao = db.accountDao();
 
-                // Obtener o crear cuenta por defecto
-                long accountId;
-                List<Account> accounts = accountDao.getAllByUserSync(finalUserId);
-                if (accounts == null || accounts.isEmpty()) {
-                    Account acc = new Account();
-                    acc.setUserId(finalUserId);
-                    acc.setName("Cuenta de Débito");
-                    acc.setType(Account.AccountType.CHECKING);
-                    acc.setCurrencyCode("MXN");
-                    acc.setBalance(0);
-                    acc.setAvailable(0);
-                    acc.setCreatedAt(Instant.now());
-                    acc.setUpdatedAt(Instant.now());
-                    accountId = accountDao.insert(acc);
-                } else {
-                    accountId = accounts.get(0).getAccountId();
-                }
+                // Crear una nueva cuenta para esta tarjeta de débito con el saldo inicial
+                Account acc = new Account();
+                acc.setUserId(finalUserId);
+                acc.setName(finalAlias.isEmpty() ? finalBankName + " - Débito" : finalAlias);
+                acc.setType(Account.AccountType.CHECKING);
+                acc.setCurrencyCode("MXN");
+                acc.setBalance(finalInitialBalance);
+                acc.setAvailable(finalInitialBalance);
+                acc.setCreatedAt(Instant.now());
+                acc.setUpdatedAt(Instant.now());
+                long accountId = accountDao.insert(acc);
 
                 // Crear entidad de tarjeta de débito
                 DebitCardEntity card = new DebitCardEntity();

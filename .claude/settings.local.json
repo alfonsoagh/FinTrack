@@ -13,7 +13,8 @@
       "Bash(gradlew.bat --refresh-dependencies build)",
       "Bash(copy \"app\\src\\debug\\google-services.json\" \"app\\google-services.json\")",
       "Bash(copy \"app\\src\\debug\\google-services.json\" \"app\\src\\release\\google-services.json\")",
-      "Bash(mkdir -p app/src/release)"
+      "Bash(mkdir -p app/src/release)",
+      "Bash(cmd /c gradlew.bat build)"
     ],
     "deny": [],
     "ask": []

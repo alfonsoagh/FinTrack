@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/img_category"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_primary_circle"
+            android:contentDescription="Category icon"
+            android:padding="8dp"
+            android:src="@drawable/ic_restaurant"
+            app:tint="@color/primary" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txt_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Descripción"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txt_category_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Categoría • Fecha"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txt_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="-$280.00"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
