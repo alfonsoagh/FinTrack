@@ -333,4 +333,83 @@ public interface TransactionDao {
      */
     @Query("SELECT * FROM transactions WHERE user_id = :userId AND card_id = :cardId AND card_type = :cardType ORDER BY transaction_date DESC")
     LiveData<List<Transaction>> getByCard(long userId, long cardId, String cardType);
+
+    // ========== Reports Queries ==========
+
+    /**
+     * Get spending by category for date range
+     */
+    @Query("SELECT c.category_id, c.name as category_name, c.icon as category_icon, c.color as category_color, " +
+            "COALESCE(SUM(t.amount), 0) as total_amount, COUNT(t.transaction_id) as transaction_count " +
+            "FROM categories c " +
+            "LEFT JOIN transactions t ON c.category_id = t.category_id " +
+            "AND t.user_id = :userId AND t.type = 'EXPENSE' AND t.status = 'COMPLETED' " +
+            "AND t.transaction_date BETWEEN :startDate AND :endDate " +
+            "WHERE c.is_expense = 1 AND c.active = 1 " +
+            "GROUP BY c.category_id " +
+            "ORDER BY total_amount DESC")
+    List<CategoryReportData> getCategoryReportForDateRange(long userId, long startDate, long endDate);
+
+    /**
+     * Get spending by account type (card_type) for date range
+     */
+    @Query("SELECT " +
+            "CASE " +
+            "  WHEN card_type = 'CREDIT' THEN 'CREDIT' " +
+            "  WHEN card_type = 'DEBIT' THEN 'DEBIT' " +
+            "  ELSE 'CASH' " +
+            "END as account_type, " +
+            "COALESCE(SUM(amount), 0) as total_amount, " +
+            "COUNT(transaction_id) as transaction_count " +
+            "FROM transactions " +
+            "WHERE user_id = :userId AND type = 'EXPENSE' AND status = 'COMPLETED' " +
+            "AND transaction_date BETWEEN :startDate AND :endDate " +
+            "GROUP BY account_type " +
+            "ORDER BY total_amount DESC")
+    List<AccountTypeReportData> getAccountTypeReportForDateRange(long userId, long startDate, long endDate);
+
+    /**
+     * Get total expenses for date range (sync)
+     */
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions " +
+            "WHERE user_id = :userId AND type = 'EXPENSE' AND status = 'COMPLETED' " +
+            "AND transaction_date BETWEEN :startDate AND :endDate")
+    double getTotalExpensesForRangeSync(long userId, long startDate, long endDate);
+
+    /**
+     * Get total income for date range (sync)
+     */
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions " +
+            "WHERE user_id = :userId AND type = 'INCOME' AND status = 'COMPLETED' " +
+            "AND transaction_date BETWEEN :startDate AND :endDate")
+    double getTotalIncomeForRangeSync(long userId, long startDate, long endDate);
+
+    /**
+     * Get transaction count for date range (sync)
+     */
+    @Query("SELECT COUNT(*) FROM transactions " +
+            "WHERE user_id = :userId AND status = 'COMPLETED' " +
+            "AND transaction_date BETWEEN :startDate AND :endDate")
+    int getTransactionCountForRangeSync(long userId, long startDate, long endDate);
+
+    /**
+     * POJO for category report data
+     */
+    class CategoryReportData {
+        public Long category_id;
+        public String category_name;
+        public String category_icon;
+        public Integer category_color;
+        public Double total_amount;
+        public Integer transaction_count;
+    }
+
+    /**
+     * POJO for account type report data
+     */
+    class AccountTypeReportData {
+        public String account_type;
+        public Double total_amount;
+        public Integer transaction_count;
+    }
 }
