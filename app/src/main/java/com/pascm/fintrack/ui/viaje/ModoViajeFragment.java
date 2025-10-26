@@ -104,7 +104,8 @@ public class ModoViajeFragment extends Fragment {
                 Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_lugares);
                 return true;
             } else if (itemId == R.id.nav_reportes) {
-                Toast.makeText(requireContext(), "Reportes", Toast.LENGTH_SHORT).show();
+                // Navegar a reportes en lugar de mostrar un Toast
+                Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_reportes);
                 return true;
             } else if (itemId == R.id.nav_perfil) {
                 Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_perfil);

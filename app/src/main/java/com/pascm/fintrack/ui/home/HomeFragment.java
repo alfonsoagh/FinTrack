@@ -48,9 +48,9 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupListeners() {
-        // Notification button -> navigate to Recordatorios
+        // Notification button -> navigate to Notificaciones
         binding.btnNotifications.setOnClickListener(v ->
-                Navigation.findNavController(v).navigate(R.id.action_home_to_recordatorios)
+                Navigation.findNavController(v).navigate(R.id.action_home_to_notificaciones)
         );
 
         // Account cards - navegar a listas de tarjetas

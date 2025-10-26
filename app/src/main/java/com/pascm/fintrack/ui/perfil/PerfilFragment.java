@@ -27,6 +27,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.databinding.FragmentPerfilBinding;
 import com.pascm.fintrack.data.TripPrefs;
+import com.pascm.fintrack.data.repository.GroupRepository;
 import com.pascm.fintrack.data.repository.UserRepository;
 import com.pascm.fintrack.data.local.entity.User;
 import com.pascm.fintrack.data.local.entity.UserProfile;
@@ -40,6 +41,7 @@ public class PerfilFragment extends Fragment {
 
     private FragmentPerfilBinding binding;
     private UserRepository userRepository;
+    private GroupRepository groupRepository;
     private User currentUser;
     private UserProfile userProfile;
 
@@ -73,8 +75,9 @@ public class PerfilFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize repository
+        // Initialize repositories
         userRepository = new UserRepository(requireContext());
+        groupRepository = new GroupRepository(requireContext());
 
         // Load user data
         loadUserData();
@@ -116,6 +119,24 @@ public class PerfilFragment extends Fragment {
             SessionManager.logout(requireContext());
             TripPrefs.clearAll(requireContext());
             Navigation.findNavController(view).navigate(R.id.action_global_logout_to_login);
+        });
+
+        // Ir a grupo
+        binding.cardIrAGrupo.setOnClickListener(v -> {
+            long userId = SessionManager.getUserId(requireContext());
+
+            // Check if user belongs to any group
+            groupRepository.getActiveGroupByMemberId(userId).observe(getViewLifecycleOwner(), group -> {
+                if (group != null) {
+                    // User already belongs to a group, navigate to members screen
+                    Bundle args = new Bundle();
+                    args.putLong("groupId", group.getGroupId());
+                    Navigation.findNavController(view).navigate(R.id.action_perfil_to_miembrosGrupo, args);
+                } else {
+                    // User doesn't belong to any group, navigate to create group screen
+                    Navigation.findNavController(view).navigate(R.id.action_perfil_to_crearGrupo);
+                }
+            });
         });
 
         // Acciones de tarjetas (opcional)

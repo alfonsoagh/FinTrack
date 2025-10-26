@@ -74,7 +74,6 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
         private final TextView txtCardAlias;
         private final TextView txtCardNumber;
         private final TextView txtCardBalance;
-        private final TextView txtExpiryDate;
         private final ImageView imgBrandLogo;
 
         public CardViewHolder(@NonNull View itemView) {
@@ -84,7 +83,6 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
             txtCardAlias = itemView.findViewById(R.id.txtCardAlias);
             txtCardNumber = itemView.findViewById(R.id.txtCardNumber);
             txtCardBalance = itemView.findViewById(R.id.txtCardBalance);
-            txtExpiryDate = itemView.findViewById(R.id.txtExpiryDate);
             imgBrandLogo = itemView.findViewById(R.id.imgBrandLogo);
         }
 
@@ -96,14 +94,6 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
 
             // Balance comes from the linked account - for now show "-"
             txtCardBalance.setText("–");
-
-            // Mostrar fecha de vencimiento
-            if (card.getExpiryDate() != null) {
-                LocalDate expiryDate = card.getExpiryDate().atZone(ZoneId.systemDefault()).toLocalDate();
-                txtExpiryDate.setText(expiryDate.format(expiryFormatter));
-            } else {
-                txtExpiryDate.setText("--/--");
-            }
 
             // Configurar el gradiente de fondo
             CreditCard.CardGradient gradient;

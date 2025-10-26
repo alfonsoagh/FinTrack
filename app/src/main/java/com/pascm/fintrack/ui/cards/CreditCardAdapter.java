@@ -83,7 +83,6 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
         private final TextView txtUsagePercentage;
         private final ImageView imgBrandLogo;
         private final ProgressBar progressBar;
-        private final TextView txtExpiryDate;
         private final TextView txtStatementDate;
         private final TextView txtPaymentDate;
 
@@ -99,7 +98,6 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
             txtUsagePercentage = itemView.findViewById(R.id.txtUsagePercentage);
             imgBrandLogo = itemView.findViewById(R.id.imgBrandLogo);
             progressBar = itemView.findViewById(R.id.progressBar);
-            txtExpiryDate = itemView.findViewById(R.id.txtExpiryDate);
             txtStatementDate = itemView.findViewById(R.id.txtStatementDate);
             txtPaymentDate = itemView.findViewById(R.id.txtPaymentDate);
         }
@@ -166,14 +164,6 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
                     ? R.drawable.ic_visa_logo
                     : R.drawable.ic_mastercard_logo;
             imgBrandLogo.setImageResource(logoRes);
-
-            // Mostrar fecha de vencimiento
-            if (card.getExpiryDate() != null) {
-                LocalDate expiryDate = card.getExpiryDate().atZone(ZoneId.systemDefault()).toLocalDate();
-                txtExpiryDate.setText(expiryDate.format(expiryFormatter));
-            } else {
-                txtExpiryDate.setText("--/--");
-            }
 
             // Mostrar fecha de corte próxima
             LocalDate nextStatement = card.getNextStatementDate();

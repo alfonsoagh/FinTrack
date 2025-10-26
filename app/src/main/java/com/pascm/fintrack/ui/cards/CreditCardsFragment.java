@@ -1,9 +1,11 @@
 package com.pascm.fintrack.ui.cards;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -68,9 +70,7 @@ public class CreditCardsFragment extends Fragment {
         rvCreditCards.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         adapter = new CreditCardAdapter();
-        adapter.setOnCardClickListener(card ->
-                Toast.makeText(requireContext(), "Tarjeta: " + card.getIssuer() + " - " + card.getLabel(), Toast.LENGTH_SHORT).show()
-        );
+        adapter.setOnCardClickListener(card -> showCardOptionsMenu(view, card));
         rvCreditCards.setAdapter(adapter);
 
         // Cargar tarjetas
@@ -105,5 +105,47 @@ public class CreditCardsFragment extends Fragment {
         if (rvCreditCards != null) {
             rvCreditCards.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void showCardOptionsMenu(View anchorView, CreditCardEntity card) {
+        PopupMenu popupMenu = new PopupMenu(requireContext(), anchorView);
+        popupMenu.getMenuInflater().inflate(R.menu.menu_card_options, popupMenu.getMenu());
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_edit) {
+                editCard(card);
+                return true;
+            } else if (itemId == R.id.action_delete) {
+                showDeleteConfirmationDialog(card);
+                return true;
+            }
+            return false;
+        });
+
+        popupMenu.show();
+    }
+
+    private void editCard(CreditCardEntity card) {
+        // TODO: Implementar navegación a pantalla de edición
+        Toast.makeText(requireContext(),
+            "Editar tarjeta: " + card.getLabel(),
+            Toast.LENGTH_SHORT).show();
+    }
+
+    private void showDeleteConfirmationDialog(CreditCardEntity card) {
+        new AlertDialog.Builder(requireContext())
+            .setTitle("¿Eliminar tarjeta?")
+            .setMessage("¿Estás seguro de que deseas eliminar la tarjeta \"" + card.getLabel() + "\"? Esta acción no se puede deshacer.")
+            .setPositiveButton("Eliminar", (dialog, which) -> deleteCard(card))
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
+    private void deleteCard(CreditCardEntity card) {
+        cardRepository.deleteCreditCard(card);
+        Toast.makeText(requireContext(),
+            "Tarjeta eliminada: " + card.getLabel(),
+            Toast.LENGTH_SHORT).show();
     }
 }

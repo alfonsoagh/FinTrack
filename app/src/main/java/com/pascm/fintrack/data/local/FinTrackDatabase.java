@@ -15,7 +15,10 @@ import com.pascm.fintrack.data.local.dao.AccountDao;
 import com.pascm.fintrack.data.local.dao.CategoryDao;
 import com.pascm.fintrack.data.local.dao.CreditCardDao;
 import com.pascm.fintrack.data.local.dao.DebitCardDao;
+import com.pascm.fintrack.data.local.dao.GroupDao;
+import com.pascm.fintrack.data.local.dao.GroupMemberDao;
 import com.pascm.fintrack.data.local.dao.MerchantDao;
+import com.pascm.fintrack.data.local.dao.NotificationDao;
 import com.pascm.fintrack.data.local.dao.SyncDao;
 import com.pascm.fintrack.data.local.dao.TransactionDao;
 import com.pascm.fintrack.data.local.dao.TripDao;
@@ -24,7 +27,10 @@ import com.pascm.fintrack.data.local.entity.Account;
 import com.pascm.fintrack.data.local.entity.Category;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
 import com.pascm.fintrack.data.local.entity.DebitCardEntity;
+import com.pascm.fintrack.data.local.entity.GroupEntity;
+import com.pascm.fintrack.data.local.entity.GroupMemberEntity;
 import com.pascm.fintrack.data.local.entity.Merchant;
+import com.pascm.fintrack.data.local.entity.NotificationEntity;
 import com.pascm.fintrack.data.local.entity.PendingAction;
 import com.pascm.fintrack.data.local.entity.SyncState;
 import com.pascm.fintrack.data.local.entity.Transaction;
@@ -82,6 +88,13 @@ import java.util.concurrent.Executors;
                 // Trip management
                 Trip.class,
 
+                // Group management
+                GroupEntity.class,
+                GroupMemberEntity.class,
+
+                // Notifications
+                NotificationEntity.class,
+
                 // Sync infrastructure
                 SyncState.class,
                 PendingAction.class
@@ -91,7 +104,6 @@ import java.util.concurrent.Executors;
                 // Budget.class,
                 // BudgetAlert.class,
                 // Reminder.class,
-                // NotificationLog.class,
                 // TripParticipant.class,
                 // TripExpense.class,
                 // TripPlace.class,
@@ -100,7 +112,7 @@ import java.util.concurrent.Executors;
                 // AuditLog.class,
                 // AttachmentLocal.class
         },
-        version = 5,
+        version = 7,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -153,6 +165,21 @@ public abstract class FinTrackDatabase extends RoomDatabase {
      */
     public abstract DebitCardDao debitCardDao();
 
+    /**
+     * DAO for Group table
+     */
+    public abstract GroupDao groupDao();
+
+    /**
+     * DAO for GroupMember table
+     */
+    public abstract GroupMemberDao groupMemberDao();
+
+    /**
+     * DAO for Notification table
+     */
+    public abstract NotificationDao notificationDao();
+
     // TODO: Add remaining DAOs as they are created
     // public abstract BudgetDao budgetDao();
     // public abstract ReminderDao reminderDao();
@@ -191,11 +218,11 @@ public abstract class FinTrackDatabase extends RoomDatabase {
                                     "fintrack_database"
                             )
                             // Add migrations when schema changes
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 
                             // CAUTION: fallbackToDestructiveMigration() will DELETE ALL DATA
                             // Only use during development! Remove for production.
-                            // Uncomment for development: .fallbackToDestructiveMigration()
+                            .fallbackToDestructiveMigration()
 
                             .build();
                 }
@@ -289,6 +316,81 @@ public abstract class FinTrackDatabase extends RoomDatabase {
             // Add expiry_date column to credit_cards table
             database.execSQL(
                 "ALTER TABLE credit_cards ADD COLUMN expiry_date INTEGER"
+            );
+        }
+    };
+
+    /**
+     * Migration from version 5 to 6: Add groups and group_members tables
+     */
+    static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Create groups table
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS `groups` (" +
+                "`group_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`group_name` TEXT NOT NULL, " +
+                "`description` TEXT, " +
+                "`admin_user_id` INTEGER NOT NULL, " +
+                "`created_at` INTEGER NOT NULL, " +
+                "`is_active` INTEGER NOT NULL DEFAULT 1)"
+            );
+
+            // Create group_members table
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS `group_members` (" +
+                "`member_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`group_id` INTEGER NOT NULL, " +
+                "`user_id` INTEGER NOT NULL, " +
+                "`joined_at` INTEGER NOT NULL, " +
+                "`is_admin` INTEGER NOT NULL DEFAULT 0, " +
+                "FOREIGN KEY(`group_id`) REFERENCES `groups`(`group_id`) ON DELETE CASCADE, " +
+                "FOREIGN KEY(`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE)"
+            );
+
+            // Create indices for group_members
+            database.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_group_members_group_id` " +
+                "ON `group_members` (`group_id`)"
+            );
+
+            database.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_group_members_user_id` " +
+                "ON `group_members` (`user_id`)"
+            );
+        }
+    };
+
+    /**
+     * Migration from version 6 to 7: Add notifications table
+     */
+    static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Create notifications table
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS `notifications` (" +
+                "`notification_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`user_id` INTEGER NOT NULL, " +
+                "`title` TEXT, " +
+                "`message` TEXT, " +
+                "`type` TEXT, " +
+                "`created_at` INTEGER NOT NULL, " +
+                "`is_read` INTEGER NOT NULL DEFAULT 0, " +
+                "`related_entity_id` INTEGER, " +
+                "FOREIGN KEY(`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE)"
+            );
+
+            // Create indices for notifications
+            database.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_notifications_user_id` " +
+                "ON `notifications` (`user_id`)"
+            );
+
+            database.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_notifications_created_at` " +
+                "ON `notifications` (`created_at`)"
             );
         }
     };

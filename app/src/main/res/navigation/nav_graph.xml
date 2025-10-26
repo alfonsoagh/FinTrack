@@ -21,11 +21,6 @@
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
         <action
-            android:id="@+id/action_login_to_admin"
-            app:destination="@id/adminDashboardFragment"
-            app:popUpTo="@id/loginFragment"
-            app:popUpToInclusive="true" />
-        <action
             android:id="@+id/action_login_to_registro"
             app:destination="@id/registroFragment" />
     </fragment>
@@ -77,62 +72,10 @@
             app:destination="@id/perfilFragment"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_home_to_notificaciones"
+            app:destination="@id/notificacionesFragment" />
     </fragment>
-
-    <!-- Panel de Admin con menú reducido -->
-    <fragment
-        android:id="@+id/adminDashboardFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminDashboardFragment"
-        android:label="Panel de Administración">
-        <action
-            android:id="@+id/action_adminDashboard_to_adminUsuarios"
-            app:destination="@id/adminUsuariosFragment" />
-        <action
-            android:id="@+id/action_adminDashboard_to_adminConfig"
-            app:destination="@id/adminConfigFragment" />
-        <action
-            android:id="@+id/action_adminDashboard_to_adminCatalogo"
-            app:destination="@id/adminCatalogoFragment" />
-        <action
-            android:id="@+id/action_adminDashboard_to_adminSettings"
-            app:destination="@id/adminSettingsFragment" />
-        <action
-            android:id="@+id/action_adminDashboard_to_adminMetricas"
-            app:destination="@id/adminMetricasFragment" />
-        <action
-            android:id="@+id/action_adminDashboard_to_adminAccount"
-            app:destination="@id/adminAccountFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/adminUsuariosFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminUsuariosFragment"
-        android:label="Gestión de usuarios" />
-
-    <fragment
-        android:id="@+id/adminConfigFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminConfigFragment"
-        android:label="Configuración del producto" />
-
-    <fragment
-        android:id="@+id/adminCatalogoFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminCatalogoFragment"
-        android:label="Catálogo" />
-
-    <fragment
-        android:id="@+id/adminSettingsFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminSettingsFragment"
-        android:label="Ajustes" />
-
-    <fragment
-        android:id="@+id/adminMetricasFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminMetricasFragment"
-        android:label="Métricas" />
-
-    <fragment
-        android:id="@+id/adminAccountFragment"
-        android:name="com.pascm.fintrack.ui.admin.AdminAccountFragment"
-        android:label="Cuenta de Administrador" />
 
     <fragment
         android:id="@+id/modoViajeFragment"
@@ -157,6 +100,11 @@
         <action
             android:id="@+id/action_modo_viaje_to_perfil"
             app:destination="@id/perfilFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_modo_viaje_to_reportes"
+            app:destination="@id/reportesFragment"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="false" />
     </fragment>
@@ -246,6 +194,12 @@
             app:destination="@id/reportesFragment"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_perfil_to_crearGrupo"
+            app:destination="@id/crearGrupoFragment" />
+        <action
+            android:id="@+id/action_perfil_to_miembrosGrupo"
+            app:destination="@id/miembrosGrupoFragment" />
     </fragment>
 
     <fragment
@@ -309,4 +263,24 @@
         android:id="@+id/addDebitCardFragment"
         android:name="com.pascm.fintrack.ui.cards.AddDebitCardFragment"
         android:label="Agregar Tarjeta de Débito" />
+
+    <!-- Grupo Fragments -->
+    <fragment
+        android:id="@+id/crearGrupoFragment"
+        android:name="com.pascm.fintrack.ui.grupo.CrearGrupoFragment"
+        android:label="Crear Grupo">
+        <action
+            android:id="@+id/action_crearGrupo_to_miembrosGrupo"
+            app:destination="@id/miembrosGrupoFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/miembrosGrupoFragment"
+        android:name="com.pascm.fintrack.ui.grupo.MiembrosGrupoFragment"
+        android:label="Miembros del Grupo" />
+
+    <fragment
+        android:id="@+id/notificacionesFragment"
+        android:name="com.pascm.fintrack.ui.notifications.NotificationsFragment"
+        android:label="Notificaciones" />
 </navigation>

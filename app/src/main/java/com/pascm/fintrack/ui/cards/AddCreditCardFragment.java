@@ -252,9 +252,19 @@ public class AddCreditCardFragment extends Fragment {
                 .build();
 
         datePicker.addOnPositiveButtonClickListener(selection -> {
-            nextPaymentDate = Instant.ofEpochMilli(selection)
+            LocalDate selectedPaymentDate = Instant.ofEpochMilli(selection)
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate();
+
+            // Validar que la fecha de pago no sea anterior a la fecha de corte
+            if (nextStatementDate != null && selectedPaymentDate.isBefore(nextStatementDate)) {
+                Toast.makeText(requireContext(),
+                    "La fecha límite de pago no puede ser anterior a la fecha de corte",
+                    Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            nextPaymentDate = selectedPaymentDate;
             edtDueDay.setText(nextPaymentDate.format(dateFormatter));
             updatePreview();
         });
