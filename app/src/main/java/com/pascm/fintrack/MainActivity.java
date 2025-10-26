@@ -2,9 +2,12 @@ package com.pascm.fintrack;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
+
+import com.pascm.fintrack.util.notifications.NotificationPermissionHelper;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,5 +23,28 @@ public class MainActivity extends AppCompatActivity {
             NavController navController = navHostFragment.getNavController();
         }
 
+        // Request notification permission for Android 13+
+        requestNotificationPermissionIfNeeded();
+    }
+
+    /**
+     * Requests notification permission if not already granted
+     */
+    private void requestNotificationPermissionIfNeeded() {
+        if (!NotificationPermissionHelper.hasNotificationPermission(this)) {
+            NotificationPermissionHelper.requestNotificationPermission(this);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (NotificationPermissionHelper.handlePermissionResult(requestCode, permissions, grantResults)) {
+            // Permission granted - notifications are now enabled
+        } else {
+            // Permission denied - user won't receive notifications
+            // You could show a dialog explaining the importance of notifications
+        }
     }
 }

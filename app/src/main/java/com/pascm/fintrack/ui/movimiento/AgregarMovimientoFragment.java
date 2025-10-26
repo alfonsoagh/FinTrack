@@ -1,17 +1,32 @@
 package com.pascm.fintrack.ui.movimiento;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.pascm.fintrack.BuildConfig;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.FinTrackDatabase;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
@@ -22,8 +37,12 @@ import com.pascm.fintrack.data.repository.TransactionRepository;
 import com.pascm.fintrack.data.repository.TripRepository;
 import com.pascm.fintrack.databinding.FragmentAgregarMovimientoBinding;
 import com.pascm.fintrack.model.PaymentMethod;
+import com.pascm.fintrack.util.ImageHelper;
+import com.pascm.fintrack.util.LocationPermissionHelper;
 import com.pascm.fintrack.util.SessionManager;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -38,6 +57,7 @@ public class AgregarMovimientoFragment extends Fragment {
     private TransactionRepository transactionRepository;
     private TripRepository tripRepository;
     private CardRepository cardRepository;
+    private FusedLocationProviderClient fusedLocationClient;
 
     private Transaction.TransactionType selectedType = Transaction.TransactionType.EXPENSE;
     private LocalDate selectedDate = LocalDate.now();
@@ -47,8 +67,30 @@ public class AgregarMovimientoFragment extends Fragment {
     private PaymentMethod selectedPaymentMethod;
     private PaymentMethod selectedPaymentMethodTo; // Para transferencias
 
+    // Photo management
+    private Uri selectedPhotoUri = null;
+    private File photoFile = null;
+    private boolean hasPhoto = false;
+
+    // Location management
+    private Double currentLatitude = null;
+    private Double currentLongitude = null;
+    private boolean hasLocation = false;
+
+    // Activity result launchers
+    private ActivityResultLauncher<Intent> takePictureLauncher;
+    private ActivityResultLauncher<Intent> pickImageLauncher;
+
+    private static final int CAMERA_PERMISSION_REQUEST_CODE = 1002;
+
     public AgregarMovimientoFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setupActivityResultLaunchers();
     }
 
     @Override
@@ -62,10 +104,11 @@ public class AgregarMovimientoFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize repositories
+        // Initialize repositories and services
         transactionRepository = new TransactionRepository(requireContext());
         tripRepository = new TripRepository(requireContext());
         cardRepository = new CardRepository(requireContext());
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
         setupTypeButtons();
         updateDateDisplay();
@@ -79,14 +122,236 @@ public class AgregarMovimientoFragment extends Fragment {
         // Botón guardar movimiento
         binding.btnSaveMovement.setOnClickListener(v -> saveTransaction());
 
-        // Botones de adjuntar foto y ubicación (sin lógica por ahora)
-        binding.btnAttachPhoto.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Adjuntar foto (próximamente)", Toast.LENGTH_SHORT).show()
+        // Botón adjuntar foto - ahora funcional
+        binding.btnAttachPhoto.setOnClickListener(v -> showPhotoOptions());
+
+        // Botón ubicación GPS - ahora funcional
+        binding.btnAddLocation.setOnClickListener(v -> {
+            if (hasLocation) {
+                showLocationOptions();
+            } else {
+                getCurrentLocationWithPermission();
+            }
+        });
+    }
+
+    /**
+     * Setup activity result launchers for camera and gallery
+     */
+    private void setupActivityResultLaunchers() {
+        // Take picture launcher
+        takePictureLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    if (photoFile != null && photoFile.exists()) {
+                        selectedPhotoUri = Uri.fromFile(photoFile);
+                        hasPhoto = true;
+                        Toast.makeText(requireContext(), "✓ Foto capturada", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
         );
 
-        binding.btnAddLocation.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Agregar ubicación (próximamente)", Toast.LENGTH_SHORT).show()
+        // Pick image launcher
+        pickImageLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    selectedPhotoUri = result.getData().getData();
+                    if (selectedPhotoUri != null) {
+                        hasPhoto = true;
+                        Toast.makeText(requireContext(), "✓ Foto seleccionada", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
         );
+    }
+
+    /**
+     * Show photo options dialog
+     */
+    private void showPhotoOptions() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Adjuntar foto")
+                .setMessage("¿Cómo deseas adjuntar la foto?")
+                .setPositiveButton("Tomar foto", (dialog, which) -> takePicture())
+                .setNegativeButton("Elegir de galería", (dialog, which) -> pickImageFromGallery())
+                .setNeutralButton("Cancelar", null)
+                .show();
+    }
+
+    /**
+     * Take picture with camera
+     */
+    private void takePicture() {
+        // Check camera permission
+        if (requireContext().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+            return;
+        }
+
+        try {
+            // Create temp file for photo
+            photoFile = createImageFile();
+
+            if (photoFile != null) {
+                Uri photoUri = FileProvider.getUriForFile(
+                    requireContext(),
+                    BuildConfig.APPLICATION_ID + ".fileprovider",
+                    photoFile
+                );
+
+                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                takePictureLauncher.launch(takePictureIntent);
+            }
+        } catch (IOException e) {
+            Toast.makeText(requireContext(), "Error al crear archivo de foto", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Create temp image file
+     */
+    private File createImageFile() throws IOException {
+        String imageFileName = "TRANSACTION_" + System.currentTimeMillis();
+        File storageDir = requireContext().getCacheDir();
+        return File.createTempFile(imageFileName, ".jpg", storageDir);
+    }
+
+    /**
+     * Pick image from gallery
+     */
+    private void pickImageFromGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        pickImageLauncher.launch(intent);
+    }
+
+    /**
+     * Show location options when location already exists
+     */
+    private void showLocationOptions() {
+        String currentLocation = String.format(Locale.US, "Ubicación actual:\n%.6f, %.6f",
+                currentLatitude, currentLongitude);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Ubicación GPS")
+                .setMessage(currentLocation)
+                .setPositiveButton("Actualizar", (dialog, which) -> getCurrentLocationWithPermission())
+                .setNegativeButton("Eliminar", (dialog, which) -> {
+                    currentLatitude = null;
+                    currentLongitude = null;
+                    hasLocation = false;
+                    Toast.makeText(requireContext(), "Ubicación eliminada", Toast.LENGTH_SHORT).show();
+                })
+                .setNeutralButton("Cancelar", null)
+                .show();
+    }
+
+    /**
+     * Get current location with permission check
+     */
+    private void getCurrentLocationWithPermission() {
+        // Verificar si tiene permisos de ubicación de alta precisión
+        if (!LocationPermissionHelper.hasFineLocationPermission(requireContext())) {
+            // Mostrar explicación si es necesario
+            if (LocationPermissionHelper.shouldShowLocationRationale(requireActivity())) {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Permiso de ubicación necesario")
+                        .setMessage(LocationPermissionHelper.getLocationPermissionExplanation(requireContext()))
+                        .setPositiveButton("Conceder permiso", (dialog, which) ->
+                                LocationPermissionHelper.requestLocationPermission(requireActivity()))
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            } else {
+                // Solicitar permisos directamente
+                LocationPermissionHelper.requestLocationPermission(requireActivity());
+            }
+            return;
+        }
+
+        // Tenemos permisos, obtener ubicación de ALTA PRECISIÓN
+        getCurrentLocationHighAccuracy();
+    }
+
+    /**
+     * Get current location with high accuracy using FusedLocationProviderClient
+     */
+    @SuppressLint("MissingPermission")
+    private void getCurrentLocationHighAccuracy() {
+        Toast.makeText(requireContext(), "Obteniendo ubicación...", Toast.LENGTH_SHORT).show();
+
+        // Usar FusedLocationProviderClient con prioridad de ALTA PRECISIÓN
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        currentLatitude = location.getLatitude();
+                        currentLongitude = location.getLongitude();
+                        hasLocation = true;
+
+                        Toast.makeText(requireContext(),
+                                String.format(Locale.US, "✓ Ubicación GPS obtenida\n%.6f, %.6f",
+                                        currentLatitude, currentLongitude),
+                                Toast.LENGTH_LONG).show();
+                    } else {
+                        // Fallback: intentar con último conocido
+                        getLastKnownLocation();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(),
+                            "Error al obtener ubicación: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                    // Fallback
+                    getLastKnownLocation();
+                });
+    }
+
+    /**
+     * Fallback: Get last known location
+     */
+    @SuppressLint("MissingPermission")
+    private void getLastKnownLocation() {
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        currentLatitude = location.getLatitude();
+                        currentLongitude = location.getLongitude();
+                        hasLocation = true;
+
+                        Toast.makeText(requireContext(),
+                                String.format(Locale.US, "✓ Ubicación obtenida (última conocida)\n%.6f, %.6f",
+                                        currentLatitude, currentLongitude),
+                                Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(requireContext(),
+                                "No se pudo obtener la ubicación. Asegúrate de que el GPS esté activado.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                takePicture();
+            } else {
+                Toast.makeText(requireContext(), "Permiso de cámara denegado", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == LocationPermissionHelper.LOCATION_PERMISSION_REQUEST_CODE) {
+            if (LocationPermissionHelper.handlePermissionResult(requestCode, grantResults)) {
+                getCurrentLocationHighAccuracy();
+            } else {
+                Toast.makeText(requireContext(),
+                        "Permiso de ubicación denegado",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     private void setupTypeButtons() {
@@ -94,48 +359,85 @@ public class AgregarMovimientoFragment extends Fragment {
         binding.btnIngreso.setOnClickListener(v -> {
             selectedType = Transaction.TransactionType.INCOME;
             updateTypeButtonsUI();
+            updateCategorySpinner();
         });
 
         binding.btnGasto.setOnClickListener(v -> {
             selectedType = Transaction.TransactionType.EXPENSE;
             updateTypeButtonsUI();
+            updateCategorySpinner();
         });
 
         binding.btnTransferencia.setOnClickListener(v -> {
             selectedType = Transaction.TransactionType.TRANSFER;
             updateTypeButtonsUI();
+            updateCategorySpinner();
         });
 
         // Establecer estado inicial (gasto seleccionado por defecto)
         updateTypeButtonsUI();
+        updateCategorySpinner();
     }
 
     private void updateTypeButtonsUI() {
-        // Reset all buttons
-        binding.btnIngreso.setBackgroundColor(getResources().getColor(android.R.color.transparent, null));
-        binding.btnGasto.setBackgroundColor(getResources().getColor(android.R.color.transparent, null));
-        binding.btnTransferencia.setBackgroundColor(getResources().getColor(android.R.color.transparent, null));
+        // Reset all buttons to unselected/unactivated state
+        binding.btnIngreso.setSelected(false);
+        binding.btnGasto.setSelected(false);
+        binding.btnTransferencia.setSelected(false);
+        binding.btnIngreso.setActivated(false);
+        binding.btnGasto.setActivated(false);
+        binding.btnTransferencia.setActivated(false);
 
-        // Highlight selected button
-        int selectedColor = getResources().getColor(android.R.color.white, null);
+        // Set selected/activated button
         switch (selectedType) {
             case INCOME:
-                binding.btnIngreso.setBackgroundColor(selectedColor);
+                binding.btnIngreso.setSelected(true);
+                binding.btnIngreso.setActivated(true);
                 binding.cardAccountTo.setVisibility(View.GONE);
                 binding.tvAccountLabel.setVisibility(View.GONE);
                 break;
             case EXPENSE:
-                binding.btnGasto.setBackgroundColor(selectedColor);
+                binding.btnGasto.setSelected(true);
+                binding.btnGasto.setActivated(true);
                 binding.cardAccountTo.setVisibility(View.GONE);
                 binding.tvAccountLabel.setVisibility(View.GONE);
                 break;
             case TRANSFER:
-                binding.btnTransferencia.setBackgroundColor(selectedColor);
+                binding.btnTransferencia.setSelected(true);
+                binding.btnTransferencia.setActivated(true);
                 binding.cardAccountTo.setVisibility(View.VISIBLE);
                 binding.tvAccountLabel.setVisibility(View.VISIBLE);
-                binding.tvAccountLabel.setText("Desde");
+                binding.tvAccountLabel.setText(R.string.desde);
                 break;
         }
+    }
+
+    /**
+     * Update category spinner based on transaction type
+     */
+    private void updateCategorySpinner() {
+        int arrayResourceId;
+
+        switch (selectedType) {
+            case INCOME:
+                arrayResourceId = R.array.categories_income;
+                break;
+            case TRANSFER:
+                arrayResourceId = R.array.categories_transfer;
+                break;
+            case EXPENSE:
+            default:
+                arrayResourceId = R.array.categories_expense;
+                break;
+        }
+
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                requireContext(),
+                arrayResourceId,
+                android.R.layout.simple_spinner_item
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.spinnerCategory.setAdapter(adapter);
     }
 
     private void updateDateDisplay() {
@@ -258,6 +560,13 @@ public class AgregarMovimientoFragment extends Fragment {
         // Obtener nota (opcional)
         String notes = binding.etNote.getText().toString().trim();
 
+        // Agregar información de ubicación a las notas si existe
+        if (hasLocation && currentLatitude != null && currentLongitude != null) {
+            String locationInfo = String.format(Locale.US, "\n📍 GPS: %.6f, %.6f",
+                    currentLatitude, currentLongitude);
+            notes = notes.isEmpty() ? locationInfo.trim() : notes + locationInfo;
+        }
+
         // Obtener userId desde sesión
         long userId = SessionManager.getUserId(requireContext());
 
@@ -290,10 +599,6 @@ public class AgregarMovimientoFragment extends Fragment {
                 break;
         }
 
-        // TODO: Asociar con categoría seleccionada en spinner
-        // String selectedCategory = binding.spinnerCategory.getSelectedItem().toString();
-        // transaction.setCategoryId(getCategoryIdByName(selectedCategory));
-
         // Verificar si hay un viaje activo y asociar automáticamente
         FinTrackDatabase.databaseWriteExecutor.execute(() -> {
             try {
@@ -303,7 +608,18 @@ public class AgregarMovimientoFragment extends Fragment {
                 }
 
                 // Guardar la transacción
-                transactionRepository.insertTransaction(transaction);
+                long transactionId = transactionRepository.insertTransactionSync(transaction);
+
+                // Guardar foto si existe
+                if (hasPhoto && selectedPhotoUri != null) {
+                    String photoPath = ImageHelper.saveImageToInternalStorage(
+                            requireContext(),
+                            selectedPhotoUri,
+                            "transaction_" + transactionId + "_" + System.currentTimeMillis() + ".jpg"
+                    );
+                    // TODO: Asociar photoPath con la transacción en la base de datos
+                    // Por ahora solo se guarda la foto
+                }
 
                 // Actualizar saldos según el método de pago
                 updateBalances(transaction, selectedPaymentMethod);
@@ -313,7 +629,12 @@ public class AgregarMovimientoFragment extends Fragment {
                     String typeText = selectedType == Transaction.TransactionType.INCOME ? "Ingreso" :
                                     selectedType == Transaction.TransactionType.EXPENSE ? "Gasto" : "Transferencia";
                     String paymentText = selectedPaymentMethod.getDisplayName();
-                    Toast.makeText(requireContext(), typeText + " guardado - " + paymentText, Toast.LENGTH_LONG).show();
+
+                    String successMessage = typeText + " guardado - " + paymentText;
+                    if (hasPhoto) successMessage += "\n✓ Foto adjunta";
+                    if (hasLocation) successMessage += "\n✓ Ubicación GPS";
+
+                    Toast.makeText(requireContext(), successMessage, Toast.LENGTH_LONG).show();
                     Navigation.findNavController(requireView()).navigateUp();
                 });
             } catch (Exception e) {
@@ -401,6 +722,16 @@ public class AgregarMovimientoFragment extends Fragment {
             "Transferencia de " + selectedPaymentMethod.getDisplayName() + " a " + selectedPaymentMethodTo.getDisplayName() :
             notes;
 
+        // Agregar información de ubicación a las notas si existe
+        if (hasLocation && currentLatitude != null && currentLongitude != null) {
+            String locationInfo = String.format(Locale.US, "\n📍 GPS: %.6f, %.6f",
+                    currentLatitude, currentLongitude);
+            transferNote += locationInfo;
+        }
+
+        // Make final for lambda
+        final String finalTransferNote = transferNote;
+
         long userId = SessionManager.getUserId(requireContext());
         Instant transactionDate = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
 
@@ -414,7 +745,7 @@ public class AgregarMovimientoFragment extends Fragment {
                         Transaction.TransactionType.EXPENSE,
                         selectedPaymentMethod,
                         transactionDate,
-                        transferNote + " [Salida]"
+                        finalTransferNote + " [Salida]"
                 );
 
                 // Crear transacción de entrada (destino)
@@ -424,7 +755,7 @@ public class AgregarMovimientoFragment extends Fragment {
                         Transaction.TransactionType.INCOME,
                         selectedPaymentMethodTo,
                         transactionDate,
-                        transferNote + " [Entrada]"
+                        finalTransferNote + " [Entrada]"
                 );
 
                 // Guardar ambas transacciones
@@ -436,9 +767,11 @@ public class AgregarMovimientoFragment extends Fragment {
                 updateBalances(inTransaction, selectedPaymentMethodTo);
 
                 requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(),
-                        "Transferencia realizada: " + selectedPaymentMethod.getDisplayName() + " → " + selectedPaymentMethodTo.getDisplayName(),
-                        Toast.LENGTH_LONG).show();
+                    String successMessage = "Transferencia realizada: " + selectedPaymentMethod.getDisplayName() +
+                                          " → " + selectedPaymentMethodTo.getDisplayName();
+                    if (hasLocation) successMessage += "\n✓ Ubicación GPS";
+
+                    Toast.makeText(requireContext(), successMessage, Toast.LENGTH_LONG).show();
                     Navigation.findNavController(requireView()).navigateUp();
                 });
             } catch (Exception e) {

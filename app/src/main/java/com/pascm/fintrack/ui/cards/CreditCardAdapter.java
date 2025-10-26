@@ -10,24 +10,32 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pascm.fintrack.R;
+import com.pascm.fintrack.data.local.entity.CreditCardEntity;
 import com.pascm.fintrack.model.CreditCard;
 
 import java.text.NumberFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.CardViewHolder> {
 
-    private List<CreditCard> cards;
+    private List<CreditCardEntity> cards;
     private OnCardClickListener listener;
     private final NumberFormat currencyFormat;
+    private final DateTimeFormatter expiryFormatter = DateTimeFormatter.ofPattern("MM/yy");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d MMM", new Locale("es", "MX"));
 
     public interface OnCardClickListener {
-        void onCardClick(CreditCard card);
+        void onCardClick(CreditCardEntity card);
     }
 
     public CreditCardAdapter() {
@@ -36,7 +44,7 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
         this.currencyFormat.setMaximumFractionDigits(0);
     }
 
-    public void setCards(List<CreditCard> cards) {
+    public void setCards(List<CreditCardEntity> cards) {
         this.cards = cards;
         notifyDataSetChanged();
     }
@@ -55,8 +63,8 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
 
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
-        CreditCard card = cards.get(position);
-        holder.bind(card, listener, currencyFormat);
+        CreditCardEntity card = cards.get(position);
+        holder.bind(card, listener, currencyFormat, expiryFormatter, dateFormatter);
     }
 
     @Override
@@ -75,6 +83,9 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
         private final TextView txtUsagePercentage;
         private final ImageView imgBrandLogo;
         private final ProgressBar progressBar;
+        private final TextView txtExpiryDate;
+        private final TextView txtStatementDate;
+        private final TextView txtPaymentDate;
 
         public CardViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -88,17 +99,21 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
             txtUsagePercentage = itemView.findViewById(R.id.txtUsagePercentage);
             imgBrandLogo = itemView.findViewById(R.id.imgBrandLogo);
             progressBar = itemView.findViewById(R.id.progressBar);
+            txtExpiryDate = itemView.findViewById(R.id.txtExpiryDate);
+            txtStatementDate = itemView.findViewById(R.id.txtStatementDate);
+            txtPaymentDate = itemView.findViewById(R.id.txtPaymentDate);
         }
 
-        public void bind(CreditCard card, OnCardClickListener listener, NumberFormat currencyFormat) {
-            txtBankName.setText(card.getBank());
+        public void bind(CreditCardEntity card, OnCardClickListener listener, NumberFormat currencyFormat,
+                         DateTimeFormatter expiryFormatter, DateTimeFormatter dateFormatter) {
+            txtBankName.setText(card.getIssuer());
             txtCardLabel.setText(card.getLabel());
             txtCardNumber.setText("•••• •••• •••• " + card.getPanLast4());
-            txtBalance.setText(currencyFormat.format(card.getBalance()));
-            txtLimit.setText(currencyFormat.format(card.getLimit()));
+            txtBalance.setText(currencyFormat.format(card.getCurrentBalance()));
+            txtLimit.setText(currencyFormat.format(card.getCreditLimit()));
 
             // Configurar el nivel de uso
-            CreditCard.UsageLevel usageLevel = card.getUsageLevel();
+            CreditCardEntity.UsageLevel usageLevel = card.getUsageLevel();
             txtUsageLabel.setText(usageLevel.getLabel());
 
             // Configurar la barra de progreso
@@ -128,7 +143,13 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
             progressBar.setProgressDrawable(layerDrawable);
 
             // Configurar el gradiente de fondo
-            CreditCard.CardGradient gradient = card.getGradient();
+            CreditCard.CardGradient gradient;
+            try {
+                gradient = CreditCard.CardGradient.valueOf(card.getGradient());
+            } catch (IllegalArgumentException e) {
+                gradient = CreditCard.CardGradient.VIOLET; // default
+            }
+
             GradientDrawable gradientDrawable = new GradientDrawable(
                     GradientDrawable.Orientation.TL_BR,
                     new int[]{
@@ -145,6 +166,38 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
                     ? R.drawable.ic_visa_logo
                     : R.drawable.ic_mastercard_logo;
             imgBrandLogo.setImageResource(logoRes);
+
+            // Mostrar fecha de vencimiento
+            if (card.getExpiryDate() != null) {
+                LocalDate expiryDate = card.getExpiryDate().atZone(ZoneId.systemDefault()).toLocalDate();
+                txtExpiryDate.setText(expiryDate.format(expiryFormatter));
+            } else {
+                txtExpiryDate.setText("--/--");
+            }
+
+            // Mostrar fecha de corte próxima
+            LocalDate nextStatement = card.getNextStatementDate();
+            if (nextStatement != null) {
+                txtStatementDate.setText(nextStatement.format(dateFormatter));
+            } else {
+                txtStatementDate.setText("--");
+            }
+
+            // Mostrar fecha de pago próxima
+            LocalDate nextPayment = card.getNextPaymentDueDate();
+            if (nextPayment != null) {
+                txtPaymentDate.setText(nextPayment.format(dateFormatter));
+
+                // Si ya pasó la fecha de corte, mostrar fecha de pago en rojo
+                if (card.isInPaymentPeriod()) {
+                    txtPaymentDate.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.holo_red_light));
+                } else {
+                    txtPaymentDate.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+                }
+            } else {
+                txtPaymentDate.setText("--");
+                txtPaymentDate.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+            }
 
             // Click listener
             itemView.setOnClickListener(v -> {

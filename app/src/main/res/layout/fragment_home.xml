@@ -146,7 +146,7 @@
                             android:contentDescription="@string/efectivo"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_cash_card"
-                            app:tint="@null" />
+                            app:tint="@color/success_green" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

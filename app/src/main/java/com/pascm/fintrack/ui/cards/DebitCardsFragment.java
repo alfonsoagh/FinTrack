@@ -76,7 +76,7 @@ public class DebitCardsFragment extends Fragment {
         adapter = new DebitCardAdapter();
         adapter.setOnCardClickListener(card -> {
             Toast.makeText(requireContext(),
-                "Tarjeta: " + card.getBank() + " - " + card.getAlias(),
+                "Tarjeta: " + card.getIssuer() + " - " + card.getLabel(),
                 Toast.LENGTH_SHORT).show();
         });
 
@@ -89,62 +89,13 @@ public class DebitCardsFragment extends Fragment {
     private void observeCards(long userId) {
         cardRepository.getAllDebitCards(userId).observe(getViewLifecycleOwner(), entities -> {
             if (entities != null && !entities.isEmpty()) {
-                // Cargar también las cuentas para obtener los balances
-                accountDao.getAllByUser(userId).observe(getViewLifecycleOwner(), accounts -> {
-                    // Crear mapa de accountId -> balance
-                    Map<Long, Double> accountBalances = new HashMap<>();
-                    if (accounts != null) {
-                        for (Account account : accounts) {
-                            accountBalances.put(account.getAccountId(), account.getBalance());
-                        }
-                    }
-
-                    // Convertir entities a models con balance
-                    List<DebitCard> cards = entities.stream()
-                            .map(entity -> entityToModelWithBalance(entity, accountBalances))
-                            .collect(Collectors.toList());
-
-                    adapter.setCards(cards);
-                    showContent();
-                });
+                adapter.setCards(entities);
+                showContent();
             } else {
                 adapter.setCards(new ArrayList<>());
                 showEmptyState();
             }
         });
-    }
-
-    private DebitCard entityToModelWithBalance(DebitCardEntity entity, Map<Long, Double> accountBalances) {
-        CreditCard.CardGradient gradient;
-        try {
-            gradient = CreditCard.CardGradient.valueOf(entity.getGradient());
-        } catch (IllegalArgumentException e) {
-            gradient = CreditCard.CardGradient.VIOLET; // default
-        }
-
-        DebitCard card = new DebitCard(
-                entity.getIssuer(),
-                entity.getLabel(),
-                entity.getBrand() != null ? entity.getBrand() : "visa",
-                entity.getPanLast4() != null ? entity.getPanLast4() : "0000",
-                gradient
-        );
-
-        // Establecer el balance desde la cuenta asociada
-        long accountId = entity.getAccountId();
-        if (accountId > 0 && accountBalances.containsKey(accountId)) {
-            double balance = accountBalances.get(accountId);
-            card.setBalance(formatCurrency(balance));
-        } else {
-            card.setBalance("$0.00");
-        }
-
-        return card;
-    }
-
-    private String formatCurrency(double amount) {
-        NumberFormat format = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
-        return format.format(amount);
     }
 
     private void showEmptyState() {

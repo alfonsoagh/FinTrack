@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permisos de ubicación -->
+    <!-- Permisos de ubicación de alta precisión -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- Ubicación en primer plano (Android 10+) -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <!-- Permisos de cámara y galería -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -21,10 +24,16 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Permisos de notificaciones -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
 
     <application
+        android:name=".FinTrackApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -33,6 +42,13 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FinTrack">
+
+        <!-- Google Maps API Key -->
+        <!-- IMPORTANTE: Reemplaza "TU_API_KEY_AQUI" con tu API Key de Google Maps -->
+        <!-- Obtén tu API Key en: https://console.cloud.google.com/google/maps-apis -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAxOkn-vrKXGDlgwOiE7fN2xSqZ3Ul25IU" />
 
         <!-- FileProvider para compartir archivos de forma segura (fotos de cámara) -->
         <provider
@@ -54,6 +70,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Map Picker Activity for selecting location on map -->
+        <activity
+            android:name=".ui.lugar.MapPickerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.FinTrack" />
     </application>
 
 </manifest>

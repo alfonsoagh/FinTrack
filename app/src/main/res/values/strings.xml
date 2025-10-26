@@ -72,6 +72,50 @@
         <item>Otros</item>
     </string-array>
 
+    <!-- Categories for Expenses (Gastos) -->
+    <string-array name="categories_expense">
+        <item>Renta / Hipoteca</item>
+        <item>Electricidad</item>
+        <item>Agua</item>
+        <item>Gas</item>
+        <item>Internet</item>
+        <item>Teléfono</item>
+        <item>Supermercado</item>
+        <item>Comida</item>
+        <item>Transporte</item>
+        <item>Salud y Bienestar</item>
+        <item>Educación</item>
+        <item>Suscripciones</item>
+        <item>Ropa / Calzado</item>
+        <item>Belleza</item>
+        <item>Higiene personal</item>
+        <item>Entretenimiento y Ocio</item>
+        <item>Créditos</item>
+    </string-array>
+
+    <!-- Categories for Transfers (Transferencias) -->
+    <string-array name="categories_transfer">
+        <item>De efectivo a cuenta bancaria</item>
+        <item>De cuenta bancaria a efectivo</item>
+        <item>Entre tarjetas / bancos</item>
+        <item>Retiro de cajero</item>
+        <item>Pago de tarjeta de crédito</item>
+    </string-array>
+
+    <!-- Categories for Income (Ingresos) -->
+    <string-array name="categories_income">
+        <item>Sueldo</item>
+        <item>Trabajo freelance</item>
+        <item>Negocio propio</item>
+        <item>Comisión</item>
+        <item>Inversiones</item>
+        <item>Devolución de impuestos</item>
+        <item>Bonos</item>
+        <item>Donaciones recibidas</item>
+        <item>Venta de artículos usados</item>
+        <item>Reembolsos</item>
+    </string-array>
+
     <!-- Accounts -->
     <string-array name="accounts">
         <item>Tarjeta de Crédito</item>
@@ -197,4 +241,13 @@
     <string name="no_hay_tarjetas">No tienes tarjetas registradas</string>
     <string name="nombre_tarjeta_requerido">Ingresa un nombre para la tarjeta</string>
     <string name="tarjeta_guardada">Tarjeta guardada</string>
+
+    <!-- Google Maps API Key -->
+    <string name="google_maps_key">AIzaSyAxOkn-vrKXGDlgwOiE7fN2xSqZ3Ul25IU</string>
+
+    <!-- Added strings to avoid hardcoded text in layouts -->
+    <string name="currency_symbol">$</string>
+    <string name="hint_zero">0</string>
+    <string name="hacia">Hacia</string>
+    <string name="desde">Desde</string>
 </resources>

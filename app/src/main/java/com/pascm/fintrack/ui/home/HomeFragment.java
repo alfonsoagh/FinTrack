@@ -54,10 +54,8 @@ public class HomeFragment extends Fragment {
         );
 
         // Account cards - navegar a listas de tarjetas
-        binding.cardEfectivo.setOnClickListener(v ->
-                // TODO: Navegar a lista de cuentas de efectivo
-                Navigation.findNavController(v).navigate(R.id.action_home_to_debit_cards)
-        );
+        // Efectivo - sin acción
+        binding.cardEfectivo.setOnClickListener(null);
 
         binding.cardCredito.setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_home_to_credit_cards)

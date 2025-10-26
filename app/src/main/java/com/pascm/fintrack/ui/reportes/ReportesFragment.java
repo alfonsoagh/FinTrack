@@ -16,10 +16,14 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.databinding.FragmentReportesBinding;
 import com.pascm.fintrack.data.repository.ReportRepository;
+import com.pascm.fintrack.data.repository.TransactionRepository;
 import com.pascm.fintrack.model.AccountTypeReport;
 import com.pascm.fintrack.model.CategoryReport;
 import com.pascm.fintrack.model.ReportData;
 import com.pascm.fintrack.util.SessionManager;
+import com.pascm.fintrack.util.CsvExporter;
+
+import android.net.Uri;
 
 import java.text.NumberFormat;
 import java.time.Instant;
@@ -33,12 +37,16 @@ public class ReportesFragment extends Fragment {
 
     private FragmentReportesBinding binding;
     private ReportRepository reportRepository;
+    private TransactionRepository transactionRepository;
     private CategoryReportAdapter categoryAdapter;
     private AccountTypeReportAdapter accountTypeAdapter;
     private NumberFormat currencyFormat;
 
     private enum Period { DAILY, WEEKLY, MONTHLY, YEARLY, ALL_TIME }
     private Period currentPeriod = Period.MONTHLY;
+
+    private double currentTotalIncome = 0;
+    private double currentTotalExpense = 0;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -52,6 +60,7 @@ public class ReportesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         reportRepository = new ReportRepository(requireContext());
+        transactionRepository = new TransactionRepository(requireContext());
         currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
 
         setupRecyclerViews();
@@ -92,8 +101,7 @@ public class ReportesFragment extends Fragment {
     private void setupButtons() {
         binding.btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         binding.btnFilters.setOnClickListener(v -> showFilterDialog());
-        binding.btnExportCsv.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Función de exportación próximamente", Toast.LENGTH_SHORT).show());
+        binding.btnExportCsv.setOnClickListener(v -> exportReportToCsv());
     }
 
     private void showFilterDialog() {
@@ -187,8 +195,10 @@ public class ReportesFragment extends Fragment {
             @Override
             public void onSuccess(ReportData reportData) {
                 requireActivity().runOnUiThread(() -> {
-                    binding.tvTotalIncome.setText(currencyFormat.format(reportData.getTotalIncome()));
-                    binding.tvTotalExpenses.setText(currencyFormat.format(reportData.getTotalExpenses()));
+                    currentTotalIncome = reportData.getTotalIncome();
+                    currentTotalExpense = reportData.getTotalExpenses();
+                    binding.tvTotalIncome.setText(currencyFormat.format(currentTotalIncome));
+                    binding.tvTotalExpenses.setText(currencyFormat.format(currentTotalExpense));
                     binding.tvBalance.setText(currencyFormat.format(reportData.getBalance()));
                 });
             }
@@ -247,6 +257,59 @@ public class ReportesFragment extends Fragment {
                         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show());
             }
         });
+    }
+
+    private void exportReportToCsv() {
+        long userId = SessionManager.getUserId(requireContext());
+        if (userId == -1) {
+            Navigation.findNavController(requireView()).navigate(R.id.action_global_logout_to_login);
+            return;
+        }
+
+        long[] dateRange = getDateRange();
+        long startDate = dateRange[0];
+        long endDate = dateRange[1];
+
+        LocalDate startLocalDate = Instant.ofEpochMilli(startDate).atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate endLocalDate = Instant.ofEpochMilli(endDate).atZone(ZoneId.systemDefault()).toLocalDate();
+
+        String periodName = getPeriodName();
+
+        // Get all transactions for the period
+        transactionRepository.getTransactionsByDateRange(userId, startLocalDate, endLocalDate)
+                .observe(getViewLifecycleOwner(), transactions -> {
+                    if (transactions != null) {
+                        // Export on background thread
+                        new Thread(() -> {
+                            Uri csvUri = CsvExporter.exportReportToCSV(
+                                    requireContext(),
+                                    periodName,
+                                    startLocalDate,
+                                    endLocalDate,
+                                    currentTotalIncome,
+                                    currentTotalExpense,
+                                    transactions
+                            );
+
+                            requireActivity().runOnUiThread(() -> {
+                                if (csvUri != null) {
+                                    CsvExporter.shareCsv(requireContext(), csvUri);
+                                    Toast.makeText(requireContext(), "Reporte exportado exitosamente", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(requireContext(), "Error al exportar reporte", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }).start();
+                    }
+                });
+    }
+
+    private String getPeriodName() {
+        if (currentPeriod == Period.DAILY) return "Hoy";
+        else if (currentPeriod == Period.WEEKLY) return "Esta_semana";
+        else if (currentPeriod == Period.YEARLY) return "Este_año";
+        else if (currentPeriod == Period.ALL_TIME) return "Historico";
+        else return "Este_mes";
     }
 
     @Override

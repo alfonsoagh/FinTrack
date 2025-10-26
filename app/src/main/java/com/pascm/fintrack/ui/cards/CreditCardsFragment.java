@@ -69,7 +69,7 @@ public class CreditCardsFragment extends Fragment {
 
         adapter = new CreditCardAdapter();
         adapter.setOnCardClickListener(card ->
-                Toast.makeText(requireContext(), "Tarjeta: " + card.getBank() + " - " + card.getLabel(), Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Tarjeta: " + card.getIssuer() + " - " + card.getLabel(), Toast.LENGTH_SHORT).show()
         );
         rvCreditCards.setAdapter(adapter);
 
@@ -80,10 +80,7 @@ public class CreditCardsFragment extends Fragment {
     private void observeCards(long userId) {
         cardRepository.getAllCreditCards(userId).observe(getViewLifecycleOwner(), entities -> {
             if (entities != null && !entities.isEmpty()) {
-                List<CreditCard> cards = entities.stream()
-                        .map(CreditCardEntity::toModel)
-                        .collect(Collectors.toList());
-                adapter.setCards(cards);
+                adapter.setCards(entities);
                 showContent();
             } else {
                 adapter.setCards(new ArrayList<>());

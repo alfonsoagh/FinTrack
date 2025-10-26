@@ -100,7 +100,7 @@ import java.util.concurrent.Executors;
                 // AuditLog.class,
                 // AttachmentLocal.class
         },
-        version = 3,
+        version = 5,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -191,7 +191,7 @@ public abstract class FinTrackDatabase extends RoomDatabase {
                                     "fintrack_database"
                             )
                             // Add migrations when schema changes
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
 
                             // CAUTION: fallbackToDestructiveMigration() will DELETE ALL DATA
                             // Only use during development! Remove for production.
@@ -263,6 +263,32 @@ public abstract class FinTrackDatabase extends RoomDatabase {
             // Add location_enabled column
             database.execSQL(
                 "ALTER TABLE user_profiles ADD COLUMN location_enabled INTEGER NOT NULL DEFAULT 0"
+            );
+        }
+    };
+
+    /**
+     * Migration from version 3 to 4: Add photo_url field to merchants table
+     */
+    static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Add photo_url column to merchants table
+            database.execSQL(
+                "ALTER TABLE merchants ADD COLUMN photo_url TEXT"
+            );
+        }
+    };
+
+    /**
+     * Migration from version 4 to 5: Add expiry_date field to credit_cards table
+     */
+    static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Add expiry_date column to credit_cards table
+            database.execSQL(
+                "ALTER TABLE credit_cards ADD COLUMN expiry_date INTEGER"
             );
         }
     };

@@ -135,6 +135,36 @@ public class TripRepository {
     }
 
     /**
+     * Insert a new trip with callback
+     *
+     * @param trip Trip entity
+     * @param callback Callback with generated trip ID
+     */
+    public void insertTrip(Trip trip, TripCallback callback) {
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+            Instant now = Instant.now();
+            trip.setCreatedAt(now);
+            trip.setUpdatedAt(now);
+
+            long tripId = tripDao.insert(trip);
+
+            // TODO: Mark for sync
+            // SyncRepository.markForSync("TRIP", tripId, "CREATE");
+
+            if (callback != null) {
+                callback.onTripInserted(tripId);
+            }
+        });
+    }
+
+    /**
+     * Callback interface for trip insertion
+     */
+    public interface TripCallback {
+        void onTripInserted(long tripId);
+    }
+
+    /**
      * Create a new trip and make it active immediately
      *
      * This is equivalent to the old:

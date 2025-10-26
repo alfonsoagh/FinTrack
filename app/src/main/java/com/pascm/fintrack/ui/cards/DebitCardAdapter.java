@@ -12,26 +12,35 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pascm.fintrack.R;
+import com.pascm.fintrack.data.local.entity.DebitCardEntity;
 import com.pascm.fintrack.model.CreditCard;
-import com.pascm.fintrack.model.DebitCard;
 
+import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.CardViewHolder> {
 
-    private List<DebitCard> cards;
+    private List<DebitCardEntity> cards;
     private OnCardClickListener listener;
+    private final DateTimeFormatter expiryFormatter = DateTimeFormatter.ofPattern("MM/yy");
+    private final NumberFormat currencyFormat;
 
     public interface OnCardClickListener {
-        void onCardClick(DebitCard card);
+        void onCardClick(DebitCardEntity card);
     }
 
     public DebitCardAdapter() {
         this.cards = new ArrayList<>();
+        this.currencyFormat = NumberFormat.getNumberInstance(Locale.US);
+        this.currencyFormat.setMaximumFractionDigits(0);
     }
 
-    public void setCards(List<DebitCard> cards) {
+    public void setCards(List<DebitCardEntity> cards) {
         this.cards = cards;
         notifyDataSetChanged();
     }
@@ -50,8 +59,8 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
 
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
-        DebitCard card = cards.get(position);
-        holder.bind(card, listener);
+        DebitCardEntity card = cards.get(position);
+        holder.bind(card, listener, expiryFormatter, currencyFormat);
     }
 
     @Override
@@ -65,6 +74,7 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
         private final TextView txtCardAlias;
         private final TextView txtCardNumber;
         private final TextView txtCardBalance;
+        private final TextView txtExpiryDate;
         private final ImageView imgBrandLogo;
 
         public CardViewHolder(@NonNull View itemView) {
@@ -74,17 +84,40 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
             txtCardAlias = itemView.findViewById(R.id.txtCardAlias);
             txtCardNumber = itemView.findViewById(R.id.txtCardNumber);
             txtCardBalance = itemView.findViewById(R.id.txtCardBalance);
+            txtExpiryDate = itemView.findViewById(R.id.txtExpiryDate);
             imgBrandLogo = itemView.findViewById(R.id.imgBrandLogo);
         }
 
-        public void bind(DebitCard card, OnCardClickListener listener) {
-            txtBankName.setText(card.getBank());
-            txtCardAlias.setText(card.getAlias());
-            txtCardNumber.setText("•••• •••• •••• " + card.getPanLast4());
-            txtCardBalance.setText(card.getBalance());
+        public void bind(DebitCardEntity card, OnCardClickListener listener, DateTimeFormatter expiryFormatter,
+                         NumberFormat currencyFormat) {
+            txtBankName.setText(card.getIssuer());
+            txtCardAlias.setText(card.getLabel());
+            txtCardNumber.setText("•••• •••• •••• " + (card.getPanLast4() != null ? card.getPanLast4() : "0000"));
+
+            // Balance comes from the linked account - for now show "-"
+            txtCardBalance.setText("–");
+
+            // Mostrar fecha de vencimiento
+            if (card.getExpiryDate() != null) {
+                LocalDate expiryDate = card.getExpiryDate().atZone(ZoneId.systemDefault()).toLocalDate();
+                txtExpiryDate.setText(expiryDate.format(expiryFormatter));
+            } else {
+                txtExpiryDate.setText("--/--");
+            }
 
             // Configurar el gradiente de fondo
-            CreditCard.CardGradient gradient = card.getGradient();
+            CreditCard.CardGradient gradient;
+            try {
+                gradient = CreditCard.CardGradient.valueOf(card.getGradient());
+            } catch (IllegalArgumentException e) {
+                // Try with prefixed gradient names
+                try {
+                    gradient = CreditCard.CardGradient.valueOf(card.getGradient().replace("GRADIENT_", ""));
+                } catch (IllegalArgumentException ex) {
+                    gradient = CreditCard.CardGradient.SKY_BLUE; // default for debit
+                }
+            }
+
             GradientDrawable gradientDrawable = new GradientDrawable(
                     GradientDrawable.Orientation.TL_BR,
                     new int[]{

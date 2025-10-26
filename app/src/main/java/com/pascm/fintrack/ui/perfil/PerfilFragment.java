@@ -122,6 +122,9 @@ public class PerfilFragment extends Fragment {
         binding.tvNombreValor.setOnClickListener(v ->
                 Toast.makeText(requireContext(), getString(R.string.editar), Toast.LENGTH_SHORT).show()
         );
+
+        // Currency change
+        binding.tvMonedaValor.setOnClickListener(v -> showCurrencySelectionDialog());
     }
 
     private void loadUserData() {
@@ -168,9 +171,6 @@ public class PerfilFragment extends Fragment {
         // Update notification preferences
         binding.switchNotificaciones.setChecked(profile.isNotificationsEnabled());
 
-        // Update GPS privacy
-        binding.switchGps.setChecked(profile.isLocationEnabled());
-
         // Load avatar image if exists
         loadAvatarImage(profile.getAvatarUrl());
     }
@@ -196,11 +196,9 @@ public class PerfilFragment extends Fragment {
 
         // Get current switch states
         boolean notificationsEnabled = binding.switchNotificaciones.isChecked();
-        boolean locationEnabled = binding.switchGps.isChecked();
 
         // Update profile
         userProfile.setNotificationsEnabled(notificationsEnabled);
-        userProfile.setLocationEnabled(locationEnabled);
 
         // Save to database
         userRepository.updateUserProfile(userProfile);
@@ -399,6 +397,48 @@ public class PerfilFragment extends Fragment {
             binding.imgAvatar.setVisibility(View.GONE);
             binding.layoutAvatarPlaceholder.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void showCurrencySelectionDialog() {
+        if (userProfile == null) {
+            Toast.makeText(requireContext(), "Error al cargar perfil", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] currencies = getResources().getStringArray(R.array.currencies);
+        String currentCurrency = userProfile.getDefaultCurrency() != null ? userProfile.getDefaultCurrency() : "MXN";
+
+        // Find current currency index
+        int selectedIndex = 0;
+        for (int i = 0; i < currencies.length; i++) {
+            if (currencies[i].startsWith(currentCurrency)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Seleccionar moneda")
+                .setSingleChoiceItems(currencies, selectedIndex, null)
+                .setPositiveButton("Guardar", (dialog, which) -> {
+                    int selectedPosition = ((androidx.appcompat.app.AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    if (selectedPosition >= 0 && selectedPosition < currencies.length) {
+                        String selectedCurrency = currencies[selectedPosition];
+                        // Extract currency code (first 3 characters)
+                        String currencyCode = selectedCurrency.substring(0, 3);
+
+                        // Update profile
+                        userProfile.setDefaultCurrency(currencyCode);
+                        userRepository.updateUserProfile(userProfile);
+
+                        // Update UI
+                        binding.tvMonedaValor.setText(getCurrencyDisplay(currencyCode));
+
+                        Toast.makeText(requireContext(), "Moneda actualizada a " + currencyCode, Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     @Override

@@ -19,6 +19,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.textfield.TextInputEditText;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
@@ -27,6 +28,10 @@ import com.pascm.fintrack.model.CreditCard;
 import com.pascm.fintrack.util.SessionManager;
 
 import java.text.NumberFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -49,9 +54,13 @@ public class AddCreditCardFragment extends Fragment {
 
     private CreditCard.CardGradient selectedGradient = CreditCard.CardGradient.VIOLET;
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private boolean isFormatting = false;
     private TextWatcher cardNumberWatcher;
+
+    private LocalDate nextStatementDate;
+    private LocalDate nextPaymentDate;
 
     @Nullable
     @Override
@@ -143,8 +152,10 @@ public class AddCreditCardFragment extends Fragment {
 
         edtCreditLimit.addTextChangedListener(previewUpdater);
         edtCurrentBalance.addTextChangedListener(previewUpdater);
-        edtStatementDay.addTextChangedListener(previewUpdater);
-        edtDueDay.addTextChangedListener(previewUpdater);
+
+        // Date pickers for statement and payment dates
+        edtStatementDay.setOnClickListener(v -> showStatementDatePicker());
+        edtDueDay.setOnClickListener(v -> showPaymentDatePicker());
 
         rgBrand.setOnCheckedChangeListener((group, checkedId) -> updatePreview());
     }
@@ -217,6 +228,40 @@ public class AddCreditCardFragment extends Fragment {
         }
     }
 
+    private void showStatementDatePicker() {
+        MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Próxima fecha de corte")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            nextStatementDate = Instant.ofEpochMilli(selection)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+            edtStatementDay.setText(nextStatementDate.format(dateFormatter));
+            updatePreview();
+        });
+
+        datePicker.show(getParentFragmentManager(), "STATEMENT_DATE_PICKER");
+    }
+
+    private void showPaymentDatePicker() {
+        MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Próxima fecha de pago")
+                .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                .build();
+
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            nextPaymentDate = Instant.ofEpochMilli(selection)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+            edtDueDay.setText(nextPaymentDate.format(dateFormatter));
+            updatePreview();
+        });
+
+        datePicker.show(getParentFragmentManager(), "PAYMENT_DATE_PICKER");
+    }
+
     private void updatePreview() {
         // Bank name
         String bankName = edtBankName != null && edtBankName.getText() != null
@@ -256,12 +301,17 @@ public class AddCreditCardFragment extends Fragment {
         }
 
         // Dates
-        String statementDay = edtStatementDay != null && edtStatementDay.getText() != null
-                ? edtStatementDay.getText().toString() : "—";
-        String dueDay = edtDueDay != null && edtDueDay.getText() != null
-                ? edtDueDay.getText().toString() : "—";
-        previewStatementDate.setText("Corte: " + statementDay);
-        previewDueDate.setText("Pago: " + dueDay);
+        if (nextStatementDate != null) {
+            previewStatementDate.setText("Corte: " + nextStatementDate.getDayOfMonth());
+        } else {
+            previewStatementDate.setText("Corte: —");
+        }
+
+        if (nextPaymentDate != null) {
+            previewDueDate.setText("Pago: " + nextPaymentDate.getDayOfMonth());
+        } else {
+            previewDueDate.setText("Pago: —");
+        }
     }
 
     private void updatePreviewGradient() {
@@ -328,28 +378,9 @@ public class AddCreditCardFragment extends Fragment {
             return;
         }
 
-        // Parsear días de corte y pago (opcionales)
-        Integer statementDay = null;
-        Integer dueDay = null;
-        try {
-            if (edtStatementDay.getText() != null && !edtStatementDay.getText().toString().trim().isEmpty()) {
-                statementDay = Integer.parseInt(edtStatementDay.getText().toString().trim());
-                if (statementDay < 1 || statementDay > 31) {
-                    Toast.makeText(requireContext(), "Día de corte debe estar entre 1 y 31", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-            if (edtDueDay.getText() != null && !edtDueDay.getText().toString().trim().isEmpty()) {
-                dueDay = Integer.parseInt(edtDueDay.getText().toString().trim());
-                if (dueDay < 1 || dueDay > 31) {
-                    Toast.makeText(requireContext(), "Día de pago debe estar entre 1 y 31", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-        } catch (NumberFormatException e) {
-            Toast.makeText(requireContext(), "Verifica los días de corte y pago", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // Extraer días de las fechas seleccionadas
+        Integer statementDay = nextStatementDate != null ? nextStatementDate.getDayOfMonth() : null;
+        Integer dueDay = nextPaymentDate != null ? nextPaymentDate.getDayOfMonth() : null;
 
         // Crear entidad de tarjeta
         CreditCardEntity card = new CreditCardEntity();

@@ -13,11 +13,18 @@ import androidx.navigation.Navigation;
 
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.databinding.FragmentViajeActivoBinding;
-import com.pascm.fintrack.data.TripPrefs;
+import com.pascm.fintrack.data.repository.TripRepository;
+import com.pascm.fintrack.data.repository.TransactionRepository;
+import com.pascm.fintrack.util.SessionManager;
+import com.pascm.fintrack.util.CsvExporter;
+
+import android.net.Uri;
 
 public class ViajeActivoFragment extends Fragment {
 
     private FragmentViajeActivoBinding binding;
+    private TripRepository tripRepository;
+    private TransactionRepository transactionRepository;
 
     public ViajeActivoFragment() {
         // Required empty public constructor
@@ -34,6 +41,10 @@ public class ViajeActivoFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialize repositories
+        tripRepository = new TripRepository(requireContext());
+        transactionRepository = new TransactionRepository(requireContext());
+
         // Ensure correct selected item in bottom nav when on Viajes
         binding.bottomNavigation.setSelectedItemId(R.id.nav_viajes);
 
@@ -44,8 +55,9 @@ public class ViajeActivoFragment extends Fragment {
 
         // Finalizar viaje button
         binding.btnEndTrip.setOnClickListener(v -> {
+            long userId = SessionManager.getUserId(requireContext());
+            tripRepository.endActiveTrip(userId);
             Toast.makeText(requireContext(), "Viaje finalizado", Toast.LENGTH_SHORT).show();
-            TripPrefs.setActiveTrip(requireContext(), false);
             Navigation.findNavController(v).navigate(R.id.modoViajeFragment);
         });
 
@@ -55,9 +67,7 @@ public class ViajeActivoFragment extends Fragment {
         );
 
         // Exportar CSV button
-        binding.btnExportCsv.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Exportando CSV...", Toast.LENGTH_SHORT).show()
-        );
+        binding.btnExportCsv.setOnClickListener(v -> exportTripToCsv());
 
         // Bottom navigation
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
@@ -84,6 +94,33 @@ public class ViajeActivoFragment extends Fragment {
                 return true;
             }
             return false;
+        });
+    }
+
+    private void exportTripToCsv() {
+        long userId = SessionManager.getUserId(requireContext());
+        tripRepository.getActiveTrip(userId).observe(getViewLifecycleOwner(), trip -> {
+            if (trip != null) {
+                transactionRepository.getTransactionsByTrip(userId, trip.getTripId()).observe(getViewLifecycleOwner(), transactions -> {
+                    if (transactions != null) {
+                        // Export on background thread
+                        new Thread(() -> {
+                            Uri csvUri = CsvExporter.exportTripToCSV(requireContext(), trip, transactions);
+
+                            requireActivity().runOnUiThread(() -> {
+                                if (csvUri != null) {
+                                    CsvExporter.shareCsv(requireContext(), csvUri);
+                                    Toast.makeText(requireContext(), "CSV exportado exitosamente", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(requireContext(), "Error al exportar CSV", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }).start();
+                    }
+                });
+            } else {
+                Toast.makeText(requireContext(), "No hay viaje activo", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

@@ -298,9 +298,10 @@
                             android:id="@+id/edtStatementDay"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Día (1-31)"
-                            android:inputType="number"
-                            android:maxLength="2" />
+                            android:hint="dd/MM/yyyy"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
@@ -329,9 +330,10 @@
                             android:id="@+id/edtDueDay"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Día (1-31)"
-                            android:inputType="number"
-                            android:maxLength="2" />
+                            android:hint="dd/MM/yyyy"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>

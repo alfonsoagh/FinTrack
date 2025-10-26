@@ -60,33 +60,56 @@
                 android:orientation="horizontal"
                 android:padding="4dp">
 
-                <Button
+                <TextView
                     android:id="@+id/btn_ingreso"
-                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_transaction_type_button_selector"
+                    android:backgroundTint="@null"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingVertical="12dp"
                     android:text="@string/ingreso"
-                    android:textColor="@color/bottom_nav_item_enabled" />
+                    android:textAllCaps="false"
+                    android:textColor="@color/transaction_type_text_color"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-                <Button
+                <TextView
                     android:id="@+id/btn_gasto"
-                    style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:backgroundTint="@android:color/white"
+                    android:background="@drawable/bg_transaction_type_button_selector"
+                    android:backgroundTint="@null"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingVertical="12dp"
                     android:text="@string/gasto"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textAllCaps="false"
+                    android:textColor="@color/transaction_type_text_color"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-                <Button
+                <TextView
                     android:id="@+id/btn_transferencia"
-                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_transaction_type_button_selector"
+                    android:backgroundTint="@null"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingVertical="12dp"
                     android:text="@string/transferencia"
-                    android:textColor="@color/bottom_nav_item_enabled" />
+                    android:textAllCaps="false"
+                    android:textColor="@color/transaction_type_text_color"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <!-- Monto -->
@@ -101,7 +124,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-light"
-                    android:text="$"
+                    android:text="@string/currency_symbol"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="48sp"
                     android:textStyle="bold" />
@@ -114,7 +137,7 @@
                     android:background="@null"
                     android:fontFamily="sans-serif-light"
                     android:gravity="end"
-                    android:hint="0"
+                    android:hint="@string/hint_zero"
                     android:inputType="numberDecimal"
                     android:textColor="?attr/colorOnSurface"
                     android:textColorHint="@color/on_surface_variant"
@@ -156,7 +179,6 @@
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
                         android:background="@null"
-                        android:entries="@array/categories"
                         android:textColor="?attr/colorOnSurface" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -238,7 +260,7 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:background="@drawable/bg_primary_circle"
-                        android:contentDescription="Hacia"
+                        android:contentDescription="@string/hacia"
                         android:padding="8dp"
                         android:src="@drawable/ic_credit_card_small"
                         app:tint="@color/primary" />
@@ -253,7 +275,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Hacia"
+                            android:text="@string/hacia"
                             android:textColor="@color/on_surface_variant"
                             android:textSize="12sp" />
 

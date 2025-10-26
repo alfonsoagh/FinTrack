@@ -123,6 +123,12 @@ public interface CreditCardDao {
     @Query("SELECT * FROM credit_cards WHERE user_id = :userId AND brand = :brand AND archived = 0")
     List<CreditCardEntity> getByBrandSync(long userId, String brand);
 
+    /**
+     * Get all distinct user IDs that have credit cards (for notification worker).
+     */
+    @Query("SELECT DISTINCT user_id FROM credit_cards WHERE archived = 0")
+    List<Long> getAllUserIdsSync();
+
     // ========== Aggregate Queries ==========
 
     /**
@@ -142,4 +148,20 @@ public interface CreditCardDao {
      */
     @Query("SELECT SUM(credit_limit - current_balance) FROM credit_cards WHERE user_id = :userId AND archived = 0")
     LiveData<Double> getTotalAvailableCredit(long userId);
+
+    // ========== Date-based Queries for Notifications ==========
+
+    /**
+     * Get all credit cards with a specific statement day (synchronous).
+     * Used for checking which cards have their statement date today.
+     */
+    @Query("SELECT * FROM credit_cards WHERE statement_day = :day AND archived = 0 AND current_balance > 0")
+    List<CreditCardEntity> getCardsByStatementDay(int day);
+
+    /**
+     * Get all credit cards with a specific payment due day (synchronous).
+     * Used for checking which cards have their payment due date today.
+     */
+    @Query("SELECT * FROM credit_cards WHERE payment_due_day = :day AND archived = 0 AND current_balance > 0")
+    List<CreditCardEntity> getCardsByPaymentDueDay(int day);
 }

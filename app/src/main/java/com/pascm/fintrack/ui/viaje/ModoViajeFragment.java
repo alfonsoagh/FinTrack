@@ -19,6 +19,9 @@ import com.pascm.fintrack.data.repository.TransactionRepository;
 import com.pascm.fintrack.data.local.entity.Trip;
 import com.pascm.fintrack.data.local.entity.Transaction;
 import com.pascm.fintrack.util.SessionManager;
+import com.pascm.fintrack.util.CsvExporter;
+
+import android.net.Uri;
 
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -86,9 +89,7 @@ public class ModoViajeFragment extends Fragment {
         );
 
         // Export CSV button
-        binding.btnExportCsv.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Exportando CSV...", Toast.LENGTH_SHORT).show()
-        );
+        binding.btnExportCsv.setOnClickListener(v -> exportTripToCsv());
 
         // Bottom navigation
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
@@ -216,6 +217,32 @@ public class ModoViajeFragment extends Fragment {
     private String formatCurrency(double amount) {
         NumberFormat format = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
         return format.format(amount);
+    }
+
+    private void exportTripToCsv() {
+        tripRepository.getActiveTrip(userId).observe(getViewLifecycleOwner(), trip -> {
+            if (trip != null) {
+                transactionRepository.getTransactionsByTrip(userId, trip.getTripId()).observe(getViewLifecycleOwner(), transactions -> {
+                    if (transactions != null) {
+                        // Export on background thread
+                        new Thread(() -> {
+                            Uri csvUri = CsvExporter.exportTripToCSV(requireContext(), trip, transactions);
+
+                            requireActivity().runOnUiThread(() -> {
+                                if (csvUri != null) {
+                                    CsvExporter.shareCsv(requireContext(), csvUri);
+                                    Toast.makeText(requireContext(), "CSV exportado exitosamente", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(requireContext(), "Error al exportar CSV", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }).start();
+                    }
+                });
+            } else {
+                Toast.makeText(requireContext(), "No hay viaje activo", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

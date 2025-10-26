@@ -93,7 +93,8 @@
             android:orientation="horizontal"
             android:paddingHorizontal="16dp"
             android:paddingVertical="10dp"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -112,6 +113,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

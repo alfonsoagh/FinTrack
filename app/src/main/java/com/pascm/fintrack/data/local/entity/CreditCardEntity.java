@@ -113,6 +113,12 @@ public class CreditCardEntity {
     private Integer paymentDueDay;
 
     /**
+     * Card expiration date
+     */
+    @ColumnInfo(name = "expiry_date")
+    private Instant expiryDate;
+
+    /**
      * Card gradient for UI (enum stored as string)
      */
     @NonNull
@@ -188,6 +194,92 @@ public class CreditCardEntity {
         if (pct < 35) return UsageLevel.LOW;
         if (pct < 70) return UsageLevel.MEDIUM;
         return UsageLevel.HIGH;
+    }
+
+    /**
+     * Check if card is expired
+     */
+    public boolean isExpired() {
+        if (expiryDate == null) return false;
+        return Instant.now().isAfter(expiryDate);
+    }
+
+    /**
+     * Check if card is expiring soon (within 30 days)
+     */
+    public boolean isExpiringSoon() {
+        if (expiryDate == null) return false;
+        Instant threshold = Instant.now().plusSeconds(30 * 86400L);
+        return expiryDate.isBefore(threshold);
+    }
+
+    /**
+     * Calculate next statement date (fecha de corte)
+     * Returns null if statementDay is not set
+     */
+    public java.time.LocalDate getNextStatementDate() {
+        if (statementDay == null) return null;
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate thisMonth = java.time.LocalDate.of(today.getYear(), today.getMonth(),
+                Math.min(statementDay, today.lengthOfMonth()));
+
+        // If statement day already passed this month, return next month's date
+        if (today.getDayOfMonth() >= statementDay) {
+            java.time.LocalDate nextMonth = today.plusMonths(1);
+            return java.time.LocalDate.of(nextMonth.getYear(), nextMonth.getMonth(),
+                    Math.min(statementDay, nextMonth.lengthOfMonth()));
+        }
+
+        return thisMonth;
+    }
+
+    /**
+     * Calculate next payment due date
+     * Returns null if paymentDueDay is not set
+     */
+    public java.time.LocalDate getNextPaymentDueDate() {
+        if (paymentDueDay == null) return null;
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate thisMonth = java.time.LocalDate.of(today.getYear(), today.getMonth(),
+                Math.min(paymentDueDay, today.lengthOfMonth()));
+
+        // If payment day already passed this month, return next month's date
+        if (today.getDayOfMonth() >= paymentDueDay) {
+            java.time.LocalDate nextMonth = today.plusMonths(1);
+            return java.time.LocalDate.of(nextMonth.getYear(), nextMonth.getMonth(),
+                    Math.min(paymentDueDay, nextMonth.lengthOfMonth()));
+        }
+
+        return thisMonth;
+    }
+
+    /**
+     * Check if we're in the payment period (after statement date, before payment date)
+     */
+    public boolean isInPaymentPeriod() {
+        if (statementDay == null || paymentDueDay == null) return false;
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int currentDay = today.getDayOfMonth();
+
+        // Si el día de pago es mayor que el de corte (ej: corte 15, pago 20)
+        if (paymentDueDay > statementDay) {
+            return currentDay >= statementDay && currentDay < paymentDueDay;
+        } else {
+            // Si el día de pago es en el mes siguiente (ej: corte 28, pago 5)
+            return currentDay >= statementDay;
+        }
+    }
+
+    /**
+     * Check if payment is overdue
+     */
+    public boolean isPaymentOverdue() {
+        java.time.LocalDate nextPayment = getNextPaymentDueDate();
+        if (nextPayment == null) return false;
+        return java.time.LocalDate.now().isAfter(nextPayment);
     }
 
     /**
@@ -305,6 +397,14 @@ public class CreditCardEntity {
 
     public void setPaymentDueDay(Integer paymentDueDay) {
         this.paymentDueDay = paymentDueDay;
+    }
+
+    public Instant getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(Instant expiryDate) {
+        this.expiryDate = expiryDate;
     }
 
     @NonNull

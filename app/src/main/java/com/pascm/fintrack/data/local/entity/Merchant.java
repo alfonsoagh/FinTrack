@@ -89,6 +89,12 @@ public class Merchant {
     @ColumnInfo(name = "last_used_at")
     private Instant lastUsedAt;
 
+    /**
+     * Photo URL (local file path)
+     */
+    @ColumnInfo(name = "photo_url")
+    private String photoUrl;
+
     // ========== Constructors ==========
 
     public Merchant() {
@@ -213,5 +219,13 @@ public class Merchant {
 
     public void setLastUsedAt(Instant lastUsedAt) {
         this.lastUsedAt = lastUsedAt;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 }

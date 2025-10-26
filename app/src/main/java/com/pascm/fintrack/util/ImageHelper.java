@@ -53,7 +53,7 @@ public class ImageHelper {
             bitmap = rotateImageIfRequired(context, bitmap, imageUri);
 
             // Save to internal storage
-            File directory = new File(context.getFilesDir(), "profile_images");
+            File directory = new File(context.getFilesDir(), "images");
             if (!directory.exists()) {
                 directory.mkdirs();
             }
@@ -162,5 +162,36 @@ public class ImageHelper {
             return file.delete();
         }
         return false;
+    }
+
+    /**
+     * Save place photo to internal storage
+     *
+     * @param context  Context
+     * @param imageUri URI of the image
+     * @param placeId  Place ID for unique filename
+     * @return File path of saved image, or null if failed
+     */
+    public static String savePlacePhoto(Context context, Uri imageUri, long placeId) {
+        String fileName = "place_" + placeId + "_" + System.currentTimeMillis() + ".jpg";
+        return saveImageToInternalStorage(context, imageUri, fileName);
+    }
+
+    /**
+     * Save place photo from file
+     *
+     * @param context     Context
+     * @param sourceFile  Source file
+     * @param placeId     Place ID for unique filename
+     * @return File path of saved image, or null if failed
+     */
+    public static String savePlacePhotoFromFile(Context context, File sourceFile, long placeId) {
+        try {
+            Uri uri = Uri.fromFile(sourceFile);
+            return savePlacePhoto(context, uri, placeId);
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving place photo from file", e);
+            return null;
+        }
     }
 }

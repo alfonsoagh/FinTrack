@@ -389,6 +389,42 @@ public class TransactionRepository {
     // ========== Synchronous Operations (Use with caution - don't call on main thread!) ==========
 
     /**
+     * Insert a new transaction (synchronous)
+     *
+     * Automatically sets createdAt and updatedAt timestamps.
+     * Returns the generated transaction ID.
+     *
+     * WARNING: Don't call on main thread!
+     *
+     * @param transaction Transaction to insert
+     * @return The generated transaction ID
+     */
+    public long insertTransactionSync(Transaction transaction) {
+        Instant now = Instant.now();
+        transaction.setCreatedAt(now);
+        transaction.setUpdatedAt(now);
+
+        // Set default status if not set
+        if (transaction.getStatus() == null) {
+            transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
+        }
+
+        // Set default currency if not set
+        if (transaction.getCurrencyCode() == null || transaction.getCurrencyCode().isEmpty()) {
+            transaction.setCurrencyCode("MXN");
+        }
+
+        long transactionId = transactionDao.insert(transaction);
+
+        android.util.Log.i("TransactionRepository", "Inserted transaction ID: " + transactionId);
+
+        // TODO: Mark for sync
+        // SyncRepository.markForSync("TRANSACTION", transactionId, "CREATE");
+
+        return transactionId;
+    }
+
+    /**
      * Get transaction by ID (synchronous)
      *
      * WARNING: Don't call on main thread!
