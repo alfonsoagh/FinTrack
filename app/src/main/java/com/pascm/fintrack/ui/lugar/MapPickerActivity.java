@@ -2,16 +2,20 @@ package com.pascm.fintrack.ui.lugar;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -19,21 +23,30 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteActivity;
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.databinding.ActivityMapPickerBinding;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 public class MapPickerActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     public static final String EXTRA_LATITUDE = "extra_latitude";
     public static final String EXTRA_LONGITUDE = "extra_longitude";
+    public static final String EXTRA_PLACE_NAME = "extra_place_name";
 
     private ActivityMapPickerBinding binding;
     private GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationClient;
+    private ActivityResultLauncher<Intent> placesAutocompleteLauncher;
 
     private LatLng selectedLocation;
+    private String selectedPlaceName = null;
     private static final float DEFAULT_ZOOM = 15f;
 
     @Override
@@ -42,8 +55,33 @@ public class MapPickerActivity extends AppCompatActivity implements OnMapReadyCa
         binding = ActivityMapPickerBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Initialize Places API
+        if (!Places.isInitialized()) {
+            Places.initialize(getApplicationContext(), getString(R.string.google_maps_key));
+        }
+
         // Initialize location client
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // Initialize Places Autocomplete launcher
+        placesAutocompleteLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Place place = Autocomplete.getPlaceFromIntent(result.getData());
+                        LatLng latLng = place.getLatLng();
+                        if (latLng != null && googleMap != null) {
+                            // Guardar el nombre del lugar
+                            selectedPlaceName = place.getName();
+                            selectedLocation = latLng;
+                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM));
+                        }
+                    } else if (result.getResultCode() == AutocompleteActivity.RESULT_ERROR && result.getData() != null) {
+                        Status status = Autocomplete.getStatusFromIntent(result.getData());
+                        Toast.makeText(this, "Error: " + status.getStatusMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
 
         // Setup map
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -59,6 +97,9 @@ public class MapPickerActivity extends AppCompatActivity implements OnMapReadyCa
     private void setupListeners() {
         // Back button
         binding.btnBack.setOnClickListener(v -> finish());
+
+        // Search button - Open Places Autocomplete
+        binding.btnSearch.setOnClickListener(v -> openPlacesSearch());
 
         // Confirm button
         binding.btnConfirm.setOnClickListener(v -> confirmLocation());
@@ -148,8 +189,31 @@ public class MapPickerActivity extends AppCompatActivity implements OnMapReadyCa
         Intent resultIntent = new Intent();
         resultIntent.putExtra(EXTRA_LATITUDE, selectedLocation.latitude);
         resultIntent.putExtra(EXTRA_LONGITUDE, selectedLocation.longitude);
+        if (selectedPlaceName != null) {
+            resultIntent.putExtra(EXTRA_PLACE_NAME, selectedPlaceName);
+        }
         setResult(RESULT_OK, resultIntent);
         finish();
+    }
+
+    private void openPlacesSearch() {
+        try {
+            // Define place fields to return
+            java.util.List<Place.Field> fields = Arrays.asList(
+                    Place.Field.ID,
+                    Place.Field.NAME,
+                    Place.Field.ADDRESS,
+                    Place.Field.LAT_LNG
+            );
+
+            // Create autocomplete intent
+            Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields)
+                    .build(this);
+
+            placesAutocompleteLauncher.launch(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Error al abrir búsqueda: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

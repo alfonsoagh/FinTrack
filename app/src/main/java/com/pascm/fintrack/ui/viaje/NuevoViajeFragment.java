@@ -2,7 +2,9 @@ package com.pascm.fintrack.ui.viaje;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -13,6 +15,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -27,6 +31,7 @@ import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.entity.Trip;
 import com.pascm.fintrack.data.repository.TripRepository;
 import com.pascm.fintrack.databinding.FragmentNuevoViajeBinding;
+import com.pascm.fintrack.ui.lugar.MapPickerActivity;
 import com.pascm.fintrack.util.LocationPermissionHelper;
 import com.pascm.fintrack.util.SessionManager;
 
@@ -47,10 +52,73 @@ public class NuevoViajeFragment extends Fragment {
     private LocalDate endDate;
     private String selectedCurrency = "MXN";
 
+    // Coordenadas de origen y destino
+    private Double originLatitude;
+    private Double originLongitude;
+    private Double destinationLatitude;
+    private Double destinationLongitude;
+
+    private ActivityResultLauncher<Intent> originMapPickerLauncher;
+    private ActivityResultLauncher<Intent> destinationMapPickerLauncher;
+
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     public NuevoViajeFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Initialize map picker launchers
+        originMapPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    double latitude = result.getData().getDoubleExtra(MapPickerActivity.EXTRA_LATITUDE, 0);
+                    double longitude = result.getData().getDoubleExtra(MapPickerActivity.EXTRA_LONGITUDE, 0);
+                    String placeName = result.getData().getStringExtra(MapPickerActivity.EXTRA_PLACE_NAME);
+
+                    // Guardar coordenadas
+                    originLatitude = latitude;
+                    originLongitude = longitude;
+
+                    // Set location as coordinates or place name
+                    String locationText = placeName != null && !placeName.isEmpty() ?
+                            placeName : String.format(Locale.US, "%.6f, %.6f", latitude, longitude);
+                    binding.etOrigin.setText(locationText);
+
+                    // Actualizar campos de coordenadas
+                    binding.etOriginLat.setText(String.format(Locale.US, "%.6f", latitude));
+                    binding.etOriginLng.setText(String.format(Locale.US, "%.6f", longitude));
+                }
+            }
+        );
+
+        destinationMapPickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    double latitude = result.getData().getDoubleExtra(MapPickerActivity.EXTRA_LATITUDE, 0);
+                    double longitude = result.getData().getDoubleExtra(MapPickerActivity.EXTRA_LONGITUDE, 0);
+                    String placeName = result.getData().getStringExtra(MapPickerActivity.EXTRA_PLACE_NAME);
+
+                    // Guardar coordenadas
+                    destinationLatitude = latitude;
+                    destinationLongitude = longitude;
+
+                    // Set location as coordinates or place name
+                    String locationText = placeName != null && !placeName.isEmpty() ?
+                            placeName : String.format(Locale.US, "%.6f, %.6f", latitude, longitude);
+                    binding.etDestination.setText(locationText);
+
+                    // Actualizar campos de coordenadas
+                    binding.etDestinationLat.setText(String.format(Locale.US, "%.6f", latitude));
+                    binding.etDestinationLng.setText(String.format(Locale.US, "%.6f", longitude));
+                }
+            }
+        );
     }
 
     @Override
@@ -104,9 +172,18 @@ public class NuevoViajeFragment extends Fragment {
 
             datePicker.addOnPositiveButtonClickListener(selection -> {
                 startDate = Instant.ofEpochMilli(selection)
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("UTC"))
                         .toLocalDate();
                 binding.etStartDate.setText(startDate.format(formatter));
+
+                // Validar: si la fecha de inicio es posterior a la de fin, limpiar fecha de fin
+                if (endDate != null && startDate.isAfter(endDate)) {
+                    endDate = null;
+                    binding.etEndDate.setText("");
+                    Toast.makeText(requireContext(),
+                            "La fecha de inicio es posterior a la de fin. Por favor, selecciona nuevamente la fecha de fin.",
+                            Toast.LENGTH_LONG).show();
+                }
             });
 
             datePicker.show(getParentFragmentManager(), "START_DATE_PICKER");
@@ -120,9 +197,19 @@ public class NuevoViajeFragment extends Fragment {
                     .build();
 
             datePicker.addOnPositiveButtonClickListener(selection -> {
-                endDate = Instant.ofEpochMilli(selection)
-                        .atZone(ZoneId.systemDefault())
+                LocalDate selectedEndDate = Instant.ofEpochMilli(selection)
+                        .atZone(ZoneId.of("UTC"))
                         .toLocalDate();
+
+                // Validar: fecha de fin puede ser igual o posterior a la de inicio
+                if (startDate != null && selectedEndDate.isBefore(startDate)) {
+                    Toast.makeText(requireContext(),
+                            "La fecha de fin debe ser igual o posterior a la de inicio",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                endDate = selectedEndDate;
                 binding.etEndDate.setText(endDate.format(formatter));
             });
 
@@ -141,17 +228,16 @@ public class NuevoViajeFragment extends Fragment {
                 Navigation.findNavController(v).navigateUp()
         );
 
-        // Botones para obtener ubicación en origen y destino
-        binding.etOrigin.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                showLocationOptions(true);
-            }
+        // Botón seleccionar origen en mapa
+        binding.btnSelectOriginMap.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), MapPickerActivity.class);
+            originMapPickerLauncher.launch(intent);
         });
 
-        binding.etDestination.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                showLocationOptions(false);
-            }
+        // Botón seleccionar destino en mapa
+        binding.btnSelectDestinationMap.setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), MapPickerActivity.class);
+            destinationMapPickerLauncher.launch(intent);
         });
 
         // Botón guardar viaje
@@ -308,19 +394,68 @@ public class NuevoViajeFragment extends Fragment {
             return;
         }
 
-        // Obtener datos opcionales
-        String origin = binding.etOrigin.getText().toString().trim();
-        String destination = binding.etDestination.getText().toString().trim();
-
+        // Validar presupuesto (OBLIGATORIO)
         String budgetStr = binding.etBudget.getText().toString().trim();
-        Double budget = null;
-        if (!budgetStr.isEmpty()) {
-            try {
-                budget = Double.parseDouble(budgetStr);
-            } catch (NumberFormatException e) {
-                Toast.makeText(requireContext(), "Formato de presupuesto inválido", Toast.LENGTH_SHORT).show();
+        if (budgetStr.isEmpty()) {
+            Toast.makeText(requireContext(), "Ingresa el presupuesto del viaje", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Validar origen (OBLIGATORIO)
+        String origin = binding.etOrigin.getText().toString().trim();
+        if (origin.isEmpty()) {
+            Toast.makeText(requireContext(), "Selecciona el origen del viaje", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Validar destino (OBLIGATORIO)
+        String destination = binding.etDestination.getText().toString().trim();
+        if (destination.isEmpty()) {
+            Toast.makeText(requireContext(), "Selecciona el destino del viaje", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Validar coordenadas de origen (OBLIGATORIAS)
+        try {
+            String originLatStr = binding.etOriginLat.getText().toString().trim();
+            String originLngStr = binding.etOriginLng.getText().toString().trim();
+            if (originLatStr.isEmpty() || originLngStr.isEmpty()) {
+                Toast.makeText(requireContext(), "Las coordenadas de origen son obligatorias. Usa el mapa para seleccionar el origen.", Toast.LENGTH_LONG).show();
                 return;
             }
+            originLatitude = Double.parseDouble(originLatStr);
+            originLongitude = Double.parseDouble(originLngStr);
+        } catch (NumberFormatException e) {
+            Toast.makeText(requireContext(), "Formato de coordenadas de origen inválido", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Validar coordenadas de destino (OBLIGATORIAS)
+        try {
+            String destLatStr = binding.etDestinationLat.getText().toString().trim();
+            String destLngStr = binding.etDestinationLng.getText().toString().trim();
+            if (destLatStr.isEmpty() || destLngStr.isEmpty()) {
+                Toast.makeText(requireContext(), "Las coordenadas de destino son obligatorias. Usa el mapa para seleccionar el destino.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            destinationLatitude = Double.parseDouble(destLatStr);
+            destinationLongitude = Double.parseDouble(destLngStr);
+        } catch (NumberFormatException e) {
+            Toast.makeText(requireContext(), "Formato de coordenadas de destino inválido", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Parsear presupuesto (ya validado como obligatorio)
+        Double budget = null;
+        try {
+            budget = Double.parseDouble(budgetStr);
+            if (budget <= 0) {
+                Toast.makeText(requireContext(), "El presupuesto debe ser mayor a cero", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } catch (NumberFormatException e) {
+            Toast.makeText(requireContext(), "Formato de presupuesto inválido", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         // Obtener moneda seleccionada
@@ -331,11 +466,18 @@ public class NuevoViajeFragment extends Fragment {
         Trip trip = new Trip();
         trip.setUserId(SessionManager.getUserId(requireContext()));
         trip.setName(tripName);
-        trip.setOrigin(origin.isEmpty() ? null : origin);
-        trip.setDestination(destination.isEmpty() ? null : destination);
+        trip.setOrigin(origin); // Ya validado como obligatorio
+        trip.setDestination(destination); // Ya validado como obligatorio
+
+        // Guardar coordenadas (ya validadas como obligatorias)
+        trip.setOriginLatitude(originLatitude);
+        trip.setOriginLongitude(originLongitude);
+        trip.setDestinationLatitude(destinationLatitude);
+        trip.setDestinationLongitude(destinationLongitude);
+
         trip.setStartDate(startDate);
         trip.setEndDate(endDate);
-        trip.setBudgetAmount(budget);
+        trip.setBudgetAmount(budget); // Ya validado como obligatorio
         trip.setCurrencyCode(selectedCurrency);
         trip.setStatus(Trip.TripStatus.ACTIVE);
 

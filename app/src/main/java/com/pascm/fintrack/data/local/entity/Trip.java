@@ -69,16 +69,40 @@ public class Trip {
     private String currencyCode = "MXN";
 
     /**
-     * Origin location/city
+     * Origin location/city name
      */
     @ColumnInfo(name = "origin")
     private String origin;
 
     /**
-     * Destination location/city
+     * Origin latitude
+     */
+    @ColumnInfo(name = "origin_latitude")
+    private Double originLatitude;
+
+    /**
+     * Origin longitude
+     */
+    @ColumnInfo(name = "origin_longitude")
+    private Double originLongitude;
+
+    /**
+     * Destination location/city name
      */
     @ColumnInfo(name = "destination")
     private String destination;
+
+    /**
+     * Destination latitude
+     */
+    @ColumnInfo(name = "destination_latitude")
+    private Double destinationLatitude;
+
+    /**
+     * Destination longitude
+     */
+    @ColumnInfo(name = "destination_longitude")
+    private Double destinationLongitude;
 
     /**
      * Trip start date
@@ -229,12 +253,44 @@ public class Trip {
         this.origin = origin;
     }
 
+    public Double getOriginLatitude() {
+        return originLatitude;
+    }
+
+    public void setOriginLatitude(Double originLatitude) {
+        this.originLatitude = originLatitude;
+    }
+
+    public Double getOriginLongitude() {
+        return originLongitude;
+    }
+
+    public void setOriginLongitude(Double originLongitude) {
+        this.originLongitude = originLongitude;
+    }
+
     public String getDestination() {
         return destination;
     }
 
     public void setDestination(String destination) {
         this.destination = destination;
+    }
+
+    public Double getDestinationLatitude() {
+        return destinationLatitude;
+    }
+
+    public void setDestinationLatitude(Double destinationLatitude) {
+        this.destinationLatitude = destinationLatitude;
+    }
+
+    public Double getDestinationLongitude() {
+        return destinationLongitude;
+    }
+
+    public void setDestinationLongitude(Double destinationLongitude) {
+        this.destinationLongitude = destinationLongitude;
     }
 
     @NonNull

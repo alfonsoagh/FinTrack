@@ -37,7 +37,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
-                    android:text="@string/viaje_activo"
+                    android:text="Mi Viaje"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -81,6 +81,7 @@
                                 android:textSize="12sp" />
 
                             <TextView
+                                android:id="@+id/tv_trip_route"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
@@ -90,6 +91,7 @@
                                 android:textStyle="bold" />
 
                             <TextView
+                                android:id="@+id/tv_trip_dates"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
@@ -97,18 +99,6 @@
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:textSize="10sp" />
                         </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:background="@drawable/bg_status_active"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="6dp"
-                            android:text="@string/active"
-                            android:textColor="#047857"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -142,6 +132,7 @@
                                 android:textSize="14sp" />
 
                             <TextView
+                                android:id="@+id/tv_budget"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="$5,000"
@@ -165,6 +156,7 @@
                                 android:textSize="14sp" />
 
                             <TextView
+                                android:id="@+id/tv_spent"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="$1,250"
@@ -174,6 +166,7 @@
                         </LinearLayout>
 
                         <ProgressBar
+                            android:id="@+id/progress_budget"
                             android:layout_width="match_parent"
                             android:layout_height="10dp"
                             android:layout_marginTop="12dp"
@@ -197,6 +190,7 @@
                                 android:textSize="14sp" />
 
                             <TextView
+                                android:id="@+id/tv_remaining"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="$3,750"
@@ -234,6 +228,7 @@
                             android:textSize="10sp" />
 
                         <TextView
+                            android:id="@+id/tv_days_remaining"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
@@ -262,6 +257,7 @@
                             android:textSize="10sp" />
 
                         <TextView
+                            android:id="@+id/tv_transaction_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
@@ -289,10 +285,11 @@
                             android:textSize="10sp" />
 
                         <TextView
+                            android:id="@+id/tv_top_category"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Comida"
+                            android:text="---"
                             android:textColor="?attr/colorOnSurface"
                             android:textSize="10sp"
                             android:textStyle="bold" />

@@ -16,24 +16,32 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Header con ícono y nombre -->
+        <!-- Header con miniatura de foto y nombre -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- Icono de lugar -->
-            <ImageView
-                android:id="@+id/img_place_icon"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/bg_primary_circle"
-                android:contentDescription="Place icon"
-                android:padding="12dp"
-                android:src="@drawable/ic_location"
-                app:tint="@color/primary"
-                tools:ignore="HardcodedText" />
+            <!-- Miniatura de foto del lugar -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/surface_variant">
+
+                <ImageView
+                    android:id="@+id/img_place_photo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="Foto del lugar"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_location"
+                    android:background="@color/surface_variant"
+                    tools:ignore="HardcodedText" />
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Información del lugar -->
             <LinearLayout

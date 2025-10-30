@@ -75,9 +75,12 @@ public class DebitCardsFragment extends Fragment {
 
         adapter = new DebitCardAdapter();
         adapter.setOnCardClickListener(card -> {
-            Toast.makeText(requireContext(),
-                "Tarjeta: " + card.getIssuer() + " - " + card.getLabel(),
-                Toast.LENGTH_SHORT).show();
+            Bundle args = new Bundle();
+            args.putLong("cardId", card.getCardId());
+            Navigation.findNavController(requireView()).navigate(
+                R.id.action_debitCards_to_editDebitCard,
+                args
+            );
         });
 
         rvDebitCards.setAdapter(adapter);

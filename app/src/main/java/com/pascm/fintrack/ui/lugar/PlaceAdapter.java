@@ -1,5 +1,6 @@
 package com.pascm.fintrack.ui.lugar;
 
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.entity.Merchant;
+import com.pascm.fintrack.util.ImageHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,7 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
     }
 
     static class PlaceViewHolder extends RecyclerView.ViewHolder {
+        private final ImageView imgPlacePhoto;
         private final TextView txtPlaceName;
         private final TextView txtPlaceAddress;
         private final TextView txtPlaceCoordinates;
@@ -71,6 +74,7 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
 
         public PlaceViewHolder(@NonNull View itemView) {
             super(itemView);
+            imgPlacePhoto = itemView.findViewById(R.id.img_place_photo);
             txtPlaceName = itemView.findViewById(R.id.txt_place_name);
             txtPlaceAddress = itemView.findViewById(R.id.txt_place_address);
             txtPlaceCoordinates = itemView.findViewById(R.id.txt_place_coordinates);
@@ -81,6 +85,21 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
         }
 
         public void bind(Merchant place, OnPlaceActionListener listener) {
+            // Cargar foto del lugar
+            if (place.getPhotoUrl() != null && !place.getPhotoUrl().isEmpty()) {
+                Bitmap bitmap = ImageHelper.loadBitmapFromPath(place.getPhotoUrl());
+                if (bitmap != null) {
+                    imgPlacePhoto.setImageBitmap(bitmap);
+                    imgPlacePhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                } else {
+                    imgPlacePhoto.setImageResource(R.drawable.ic_location);
+                    imgPlacePhoto.setScaleType(ImageView.ScaleType.CENTER);
+                }
+            } else {
+                imgPlacePhoto.setImageResource(R.drawable.ic_location);
+                imgPlacePhoto.setScaleType(ImageView.ScaleType.CENTER);
+            }
+
             // Nombre del lugar
             txtPlaceName.setText(place.getName());
 

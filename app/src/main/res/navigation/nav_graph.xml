@@ -123,7 +123,16 @@
     <fragment
         android:id="@+id/viajeActivoFragment"
         android:name="com.pascm.fintrack.ui.viaje.ViajeActivoFragment"
-        android:label="Viaje Activo" />
+        android:label="Viaje Activo">
+        <action
+            android:id="@+id/action_viajeActivo_to_tripMap"
+            app:destination="@id/tripMapFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tripMapFragment"
+        android:name="com.pascm.fintrack.ui.viaje.TripMapFragment"
+        android:label="Mapa del Viaje" />
 
     <fragment
         android:id="@+id/agregarMovimientoFragment"
@@ -243,6 +252,9 @@
         <action
             android:id="@+id/action_debitCards_to_addDebitCard"
             app:destination="@id/addDebitCardFragment" />
+        <action
+            android:id="@+id/action_debitCards_to_editDebitCard"
+            app:destination="@id/editDebitCardFragment" />
     </fragment>
 
     <fragment
@@ -252,6 +264,9 @@
         <action
             android:id="@+id/action_creditCards_to_addCreditCard"
             app:destination="@id/addCreditCardFragment" />
+        <action
+            android:id="@+id/action_creditCards_to_editCreditCard"
+            app:destination="@id/editCreditCardFragment" />
     </fragment>
 
     <fragment
@@ -263,6 +278,24 @@
         android:id="@+id/addDebitCardFragment"
         android:name="com.pascm.fintrack.ui.cards.AddDebitCardFragment"
         android:label="Agregar Tarjeta de Débito" />
+
+    <fragment
+        android:id="@+id/editCreditCardFragment"
+        android:name="com.pascm.fintrack.ui.cards.EditCreditCardFragment"
+        android:label="Editar Tarjeta de Crédito">
+        <argument
+            android:name="cardId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editDebitCardFragment"
+        android:name="com.pascm.fintrack.ui.cards.EditDebitCardFragment"
+        android:label="Editar Tarjeta de Débito">
+        <argument
+            android:name="cardId"
+            app:argType="long" />
+    </fragment>
 
     <!-- Grupo Fragments -->
     <fragment

@@ -176,12 +176,19 @@ public class AgregarLugarFragment extends Fragment {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                     double latitude = result.getData().getDoubleExtra(MapPickerActivity.EXTRA_LATITUDE, 0);
                     double longitude = result.getData().getDoubleExtra(MapPickerActivity.EXTRA_LONGITUDE, 0);
+                    String placeName = result.getData().getStringExtra(MapPickerActivity.EXTRA_PLACE_NAME);
 
                     currentLatitude = latitude;
                     currentLongitude = longitude;
 
                     binding.etLatitud.setText(String.format(Locale.US, "%.6f", currentLatitude));
                     binding.etLongitud.setText(String.format(Locale.US, "%.6f", currentLongitude));
+
+                    // Set place name if available and field is empty
+                    if (placeName != null && !placeName.isEmpty() &&
+                        binding.etNombreLugar.getText().toString().trim().isEmpty()) {
+                        binding.etNombreLugar.setText(placeName);
+                    }
 
                     Toast.makeText(requireContext(), "Ubicación seleccionada en el mapa",
                         Toast.LENGTH_SHORT).show();
@@ -196,16 +203,11 @@ public class AgregarLugarFragment extends Fragment {
                 Navigation.findNavController(v).navigateUp()
         );
 
-        // Botón cancelar
-        binding.btnCancel.setOnClickListener(v ->
-                Navigation.findNavController(v).navigateUp()
-        );
-
         // Botón usar ubicación actual
         binding.btnUseLocation.setOnClickListener(v -> getCurrentLocationWithPermission());
 
-        // Botón buscar en mapa - Mostrar opciones
-        binding.btnSearchMap.setOnClickListener(v -> showMapOptions());
+        // Botón buscar en mapa - Ir directo al mapa
+        binding.btnSearchMap.setOnClickListener(v -> openMapPicker());
 
         // Botón tomar foto
         binding.btnTakePhoto.setOnClickListener(v -> takePicture());

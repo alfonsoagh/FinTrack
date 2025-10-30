@@ -41,6 +41,15 @@
             android:textColor="?attr/colorOnSurface"
             android:textSize="18sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_search"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Buscar lugar"
+            android:src="@drawable/ic_search"
+            app:tint="?attr/colorOnSurface" />
     </LinearLayout>
 
     <!-- Center marker -->

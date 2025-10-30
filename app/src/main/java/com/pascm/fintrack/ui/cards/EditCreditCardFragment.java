@@ -25,7 +25,6 @@ import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
 import com.pascm.fintrack.data.repository.CardRepository;
 import com.pascm.fintrack.model.CreditCard;
-import com.pascm.fintrack.util.SessionManager;
 
 import java.text.NumberFormat;
 import java.time.Instant;
@@ -36,9 +35,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class AddCreditCardFragment extends Fragment {
+public class EditCreditCardFragment extends Fragment {
 
     private CardRepository cardRepository;
+    private long cardId;
+    private CreditCardEntity existingCard;
 
     private TextInputEditText edtBankName, edtCardAlias, edtCardNumber;
     private TextInputEditText edtCreditLimit, edtCurrentBalance;
@@ -56,30 +57,104 @@ public class AddCreditCardFragment extends Fragment {
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private boolean isFormatting = false;
-    private TextWatcher cardNumberWatcher;
-
     private LocalDate nextStatementDate;
     private LocalDate nextPaymentDate;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_add_credit_card, container, false);
+        return inflater.inflate(R.layout.fragment_edit_credit_card, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Get card ID from arguments
+        if (getArguments() != null) {
+            cardId = getArguments().getLong("cardId", -1);
+        }
+
+        if (cardId == -1) {
+            Toast.makeText(requireContext(), "Error: ID de tarjeta inválido", Toast.LENGTH_SHORT).show();
+            Navigation.findNavController(view).navigateUp();
+            return;
+        }
+
         // Initialize repository
         cardRepository = new CardRepository(requireContext());
 
         initViews(view);
+        loadCardData();
         setupListeners();
         setupGradientSelector(view);
-        updatePreview();
-        updatePreviewGradient(); // Inicializar gradiente por defecto
+    }
+
+    private void loadCardData() {
+        cardRepository.getCreditCardById(cardId).observe(getViewLifecycleOwner(), card -> {
+            if (card == null) {
+                Toast.makeText(requireContext(), "Tarjeta no encontrada", Toast.LENGTH_SHORT).show();
+                Navigation.findNavController(requireView()).navigateUp();
+                return;
+            }
+
+            existingCard = card;
+
+            {
+                // Set form values
+                edtBankName.setText(card.getIssuer());
+                edtCardAlias.setText(card.getLabel());
+                edtCardNumber.setText("**** **** **** " + card.getPanLast4());
+
+                if (card.getCreditLimit() > 0) {
+                    edtCreditLimit.setText(String.valueOf(card.getCreditLimit()));
+                }
+                if (card.getCurrentBalance() > 0) {
+                    edtCurrentBalance.setText(String.valueOf(card.getCurrentBalance()));
+                }
+
+                // Set brand radio button
+                String brand = card.getBrand() != null ? card.getBrand().toLowerCase() : "visa";
+                switch (brand) {
+                    case "mastercard":
+                        rgBrand.check(R.id.rbMastercard);
+                        break;
+                    case "amex":
+                        rgBrand.check(R.id.rbAmex);
+                        break;
+                    case "other":
+                        rgBrand.check(R.id.rbOther);
+                        break;
+                    default:
+                        rgBrand.check(R.id.rbVisa);
+                        break;
+                }
+
+                // Set dates
+                if (card.getStatementDay() != null) {
+                    LocalDate now = LocalDate.now();
+                    nextStatementDate = LocalDate.of(now.getYear(), now.getMonth(), card.getStatementDay());
+                    edtStatementDay.setText(nextStatementDate.format(dateFormatter));
+                }
+                if (card.getPaymentDueDay() != null) {
+                    LocalDate now = LocalDate.now();
+                    nextPaymentDate = LocalDate.of(now.getYear(), now.getMonth(), card.getPaymentDueDay());
+                    edtDueDay.setText(nextPaymentDate.format(dateFormatter));
+                }
+
+                // Set gradient
+                if (card.getGradient() != null) {
+                    try {
+                        selectedGradient = CreditCard.CardGradient.valueOf(card.getGradient());
+                    } catch (IllegalArgumentException e) {
+                        selectedGradient = CreditCard.CardGradient.VIOLET;
+                    }
+                }
+
+                updatePreview();
+                updatePreviewGradient();
+            }
+        });
     }
 
     private void initViews(View view) {
@@ -109,10 +184,9 @@ public class AddCreditCardFragment extends Fragment {
         view.findViewById(R.id.btnBack).setOnClickListener(v ->
                 Navigation.findNavController(view).navigateUp());
 
-        view.findViewById(R.id.btnCancel).setOnClickListener(v ->
-                Navigation.findNavController(view).navigateUp());
+        view.findViewById(R.id.btnDelete).setOnClickListener(v -> showDeleteConfirmation());
 
-        view.findViewById(R.id.btnSave).setOnClickListener(v -> saveCard());
+        view.findViewById(R.id.btnSave).setOnClickListener(v -> updateCard());
     }
 
     private void setupListeners() {
@@ -131,33 +205,12 @@ public class AddCreditCardFragment extends Fragment {
 
         edtBankName.addTextChangedListener(previewUpdater);
         edtCardAlias.addTextChangedListener(previewUpdater);
-
-        cardNumberWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (!isFormatting) {
-                    formatCardNumber();
-                    detectBrand();
-                    updatePreview();
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
-        };
-        edtCardNumber.addTextChangedListener(cardNumberWatcher);
-
         edtCreditLimit.addTextChangedListener(previewUpdater);
         edtCurrentBalance.addTextChangedListener(previewUpdater);
 
         // Date pickers for statement and payment dates
         edtStatementDay.setOnClickListener(v -> showStatementDatePicker());
         edtDueDay.setOnClickListener(v -> showPaymentDatePicker());
-
-        rgBrand.setOnCheckedChangeListener((group, checkedId) -> updatePreview());
     }
 
     private void setupGradientSelector(View view) {
@@ -181,51 +234,6 @@ public class AddCreditCardFragment extends Fragment {
             updatePreviewGradient();
         });
         rvGradients.setAdapter(adapter);
-    }
-
-    private void formatCardNumber() {
-        if (edtCardNumber == null || isFormatting) return;
-
-        isFormatting = true;
-        String text = edtCardNumber.getText().toString().replaceAll("\\s", "");
-        StringBuilder formatted = new StringBuilder();
-
-        for (int i = 0; i < Math.min(text.length(), 16); i++) {
-            if (i > 0 && i % 4 == 0) {
-                formatted.append(" ");
-            }
-            formatted.append(text.charAt(i));
-        }
-
-        int selectionStart = edtCardNumber.getSelectionStart();
-        int spacesBeforeCursor = 0;
-        String currentText = edtCardNumber.getText().toString();
-        for (int i = 0; i < Math.min(selectionStart, currentText.length()); i++) {
-            if (currentText.charAt(i) == ' ') spacesBeforeCursor++;
-        }
-
-        edtCardNumber.setText(formatted.toString());
-
-        int newPosition = selectionStart;
-        if (formatted.length() > selectionStart && selectionStart > 0) {
-            newPosition = Math.min(selectionStart + (formatted.toString().substring(0, Math.min(formatted.length(), selectionStart + 1)).replaceAll("[^\\s]", "").length() - spacesBeforeCursor), formatted.length());
-        }
-        edtCardNumber.setSelection(Math.min(Math.max(0, newPosition), formatted.length()));
-
-        isFormatting = false;
-    }
-
-    private void detectBrand() {
-        if (edtCardNumber == null) return;
-        String number = edtCardNumber.getText().toString().replaceAll("\\s", "");
-
-        if (number.startsWith("4")) {
-            rgBrand.check(R.id.rbVisa);
-        } else if (number.startsWith("5") || number.startsWith("2")) {
-            rgBrand.check(R.id.rbMastercard);
-        } else if (number.startsWith("3")) {
-            rgBrand.check(R.id.rbAmex);
-        }
     }
 
     private void showStatementDatePicker() {
@@ -256,7 +264,6 @@ public class AddCreditCardFragment extends Fragment {
                     .atZone(ZoneId.of("UTC"))
                     .toLocalDate();
 
-            // Validar que la fecha de pago no sea anterior a la fecha de corte
             if (nextStatementDate != null && selectedPaymentDate.isBefore(nextStatementDate)) {
                 Toast.makeText(requireContext(),
                     "La fecha límite de pago no puede ser anterior a la fecha de corte",
@@ -273,17 +280,16 @@ public class AddCreditCardFragment extends Fragment {
     }
 
     private void updatePreview() {
-        // Bank name
+        if (previewBankName == null) return;
+
         String bankName = edtBankName != null && edtBankName.getText() != null
                 ? edtBankName.getText().toString() : "";
         previewBankName.setText(bankName.isEmpty() ? "Banco" : bankName);
 
-        // Alias
         String alias = edtCardAlias != null && edtCardAlias.getText() != null
                 ? edtCardAlias.getText().toString() : "";
         previewCardAlias.setText(alias.isEmpty() ? "Alias" : alias);
 
-        // Brand
         int checkedId = rgBrand.getCheckedRadioButtonId();
         String brand = "VISA";
         if (checkedId == R.id.rbMastercard) brand = "MASTERCARD";
@@ -291,14 +297,10 @@ public class AddCreditCardFragment extends Fragment {
         else if (checkedId == R.id.rbOther) brand = "OTRA";
         previewBrandText.setText(brand);
 
-        // Card number
-        String cardNumber = edtCardNumber != null && edtCardNumber.getText() != null
-                ? edtCardNumber.getText().toString() : "";
-        String last4 = cardNumber.replaceAll("\\s", "");
-        last4 = last4.length() >= 4 ? last4.substring(last4.length() - 4) : "0000";
-        previewCardNumber.setText("•••• •••• •••• " + last4);
+        if (existingCard != null) {
+            previewCardNumber.setText("•••• •••• •••• " + existingCard.getPanLast4());
+        }
 
-        // Available amount
         try {
             double limit = edtCreditLimit != null && edtCreditLimit.getText() != null
                     ? Double.parseDouble(edtCreditLimit.getText().toString().replaceAll("[^0-9.]", "")) : 0;
@@ -310,7 +312,6 @@ public class AddCreditCardFragment extends Fragment {
             previewAvailable.setText("—");
         }
 
-        // Dates
         if (nextStatementDate != null) {
             previewStatementDate.setText("Corte: " + nextStatementDate.getDayOfMonth());
         } else {
@@ -343,7 +344,12 @@ public class AddCreditCardFragment extends Fragment {
         }
     }
 
-    private void saveCard() {
+    private void updateCard() {
+        if (existingCard == null) {
+            Toast.makeText(requireContext(), "Error al cargar la tarjeta", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // Validar campos requeridos
         if (edtBankName.getText() == null || edtBankName.getText().toString().trim().isEmpty()) {
             Toast.makeText(requireContext(), "Ingresa el nombre del banco", Toast.LENGTH_SHORT).show();
@@ -355,23 +361,9 @@ public class AddCreditCardFragment extends Fragment {
             return;
         }
 
-        if (edtCardNumber.getText() == null || edtCardNumber.getText().toString().replaceAll("\\s", "").length() < 4) {
-            Toast.makeText(requireContext(), "Ingresa un número de tarjeta válido", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         // Extraer valores del formulario
         String bankName = edtBankName.getText().toString().trim();
         String alias = edtCardAlias.getText().toString().trim();
-        String cardNumber = edtCardNumber.getText().toString().replaceAll("\\s", "");
-        String last4 = cardNumber.length() >= 4 ? cardNumber.substring(cardNumber.length() - 4) : "0000";
-
-        // Determinar brand
-        int checkedId = rgBrand.getCheckedRadioButtonId();
-        String brand = "visa"; // Default
-        if (checkedId == R.id.rbMastercard) brand = "mastercard";
-        else if (checkedId == R.id.rbAmex) brand = "amex";
-        else if (checkedId == R.id.rbOther) brand = "other";
 
         // Parsear límite y balance
         double creditLimit = 0;
@@ -392,23 +384,43 @@ public class AddCreditCardFragment extends Fragment {
         Integer statementDay = nextStatementDate != null ? nextStatementDate.getDayOfMonth() : null;
         Integer dueDay = nextPaymentDate != null ? nextPaymentDate.getDayOfMonth() : null;
 
-        // Crear entidad de tarjeta
-        CreditCardEntity card = new CreditCardEntity();
-        card.setUserId(SessionManager.getUserId(requireContext()));
-        card.setIssuer(bankName);
-        card.setLabel(alias);
-        card.setBrand(brand);
-        card.setPanLast4(last4);
-        card.setCreditLimit(creditLimit);
-        card.setCurrentBalance(currentBalance);
-        card.setStatementDay(statementDay);
-        card.setPaymentDueDay(dueDay);
-        card.setGradient(selectedGradient.name());
+        // Actualizar la tarjeta existente
+        existingCard.setIssuer(bankName);
+        existingCard.setLabel(alias);
+        existingCard.setCreditLimit(creditLimit);
+        existingCard.setCurrentBalance(currentBalance);
+        existingCard.setStatementDay(statementDay);
+        existingCard.setPaymentDueDay(dueDay);
+        existingCard.setGradient(selectedGradient.name());
 
-        // Guardar en la base de datos
-        cardRepository.insertCreditCard(card);
+        // Actualizar en la base de datos
+        cardRepository.updateCreditCard(existingCard);
 
-        Toast.makeText(requireContext(), "Tarjeta registrada exitosamente", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), "Tarjeta actualizada exitosamente", Toast.LENGTH_SHORT).show();
+        Navigation.findNavController(requireView()).navigateUp();
+    }
+
+    private void showDeleteConfirmation() {
+        if (existingCard == null) {
+            Toast.makeText(requireContext(), "Error: No se puede eliminar la tarjeta", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("¿Eliminar tarjeta?")
+            .setMessage("¿Estás seguro de que deseas eliminar la tarjeta \"" + existingCard.getLabel() + "\"?\n\nEsta acción no se puede deshacer.")
+            .setPositiveButton("Eliminar", (dialog, which) -> deleteCard())
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
+    private void deleteCard() {
+        if (existingCard == null) return;
+
+        cardRepository.deleteCreditCard(existingCard);
+        Toast.makeText(requireContext(),
+            "Tarjeta eliminada: " + existingCard.getLabel(),
+            Toast.LENGTH_SHORT).show();
         Navigation.findNavController(requireView()).navigateUp();
     }
 }

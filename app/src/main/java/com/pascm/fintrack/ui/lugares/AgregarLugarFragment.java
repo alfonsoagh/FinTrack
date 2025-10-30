@@ -39,11 +39,6 @@ public class AgregarLugarFragment extends Fragment {
                 Navigation.findNavController(v).navigateUp()
         );
 
-        // Cancel link
-        binding.btnCancel.setOnClickListener(v ->
-                Navigation.findNavController(v).navigateUp()
-        );
-
         // Save place button
         binding.btnSavePlace.setOnClickListener(v -> {
             // Set that we now have places

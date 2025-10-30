@@ -360,23 +360,27 @@ public class AgregarMovimientoFragment extends Fragment {
             selectedType = Transaction.TransactionType.INCOME;
             updateTypeButtonsUI();
             updateCategorySpinner();
+            updateLocationVisibility();
         });
 
         binding.btnGasto.setOnClickListener(v -> {
             selectedType = Transaction.TransactionType.EXPENSE;
             updateTypeButtonsUI();
             updateCategorySpinner();
+            updateLocationVisibility();
         });
 
         binding.btnTransferencia.setOnClickListener(v -> {
             selectedType = Transaction.TransactionType.TRANSFER;
             updateTypeButtonsUI();
             updateCategorySpinner();
+            updateLocationVisibility();
         });
 
         // Establecer estado inicial (gasto seleccionado por defecto)
         updateTypeButtonsUI();
         updateCategorySpinner();
+        updateLocationVisibility();
     }
 
     private void updateTypeButtonsUI() {
@@ -438,6 +442,22 @@ public class AgregarMovimientoFragment extends Fragment {
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerCategory.setAdapter(adapter);
+    }
+
+    /**
+     * Actualiza la visibilidad de la ubicación GPS
+     * Solo se muestra para gastos (EXPENSE)
+     */
+    private void updateLocationVisibility() {
+        if (selectedType == Transaction.TransactionType.EXPENSE) {
+            binding.btnAddLocation.setVisibility(View.VISIBLE);
+        } else {
+            binding.btnAddLocation.setVisibility(View.GONE);
+            // Limpiar ubicación si había una
+            hasLocation = false;
+            currentLatitude = null;
+            currentLongitude = null;
+        }
     }
 
     private void updateDateDisplay() {
@@ -579,6 +599,12 @@ public class AgregarMovimientoFragment extends Fragment {
         transaction.setCurrencyCode("MXN");
         transaction.setNotes(notes.isEmpty() ? null : notes);
 
+        // Guardar coordenadas GPS si existen (importante para mostrar en el mapa del viaje)
+        if (hasLocation && currentLatitude != null && currentLongitude != null) {
+            transaction.setLatitude(currentLatitude);
+            transaction.setLongitude(currentLongitude);
+        }
+
         // Convertir LocalDate a Instant para transactionDate
         Instant transactionDate = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         transaction.setTransactionDate(transactionDate);
@@ -599,14 +625,54 @@ public class AgregarMovimientoFragment extends Fragment {
                 break;
         }
 
-        // Verificar si hay un viaje activo y asociar automáticamente
+        // Verificar si hay viaje activo y preguntar solo para gastos
+        if (selectedType == Transaction.TransactionType.EXPENSE) {
+            FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+                try {
+                    var activeTrip = tripRepository.getActiveTripSync(userId);
+                    if (activeTrip != null) {
+                        // Hay viaje activo - preguntar en UI thread
+                        final String tripName = activeTrip.getName();
+                        final long tripId = activeTrip.getTripId();
+
+                        requireActivity().runOnUiThread(() -> {
+                            showTripAssociationDialog(transaction, tripName, tripId);
+                        });
+                    } else {
+                        // No hay viaje activo - guardar directamente
+                        saveTransactionDirectly(transaction, selectedPaymentMethod);
+                    }
+                } catch (Exception e) {
+                    requireActivity().runOnUiThread(() -> {
+                        // Error al verificar viaje - guardar sin viaje
+                        saveTransactionDirectly(transaction, selectedPaymentMethod);
+                    });
+                }
+            });
+        } else {
+            // No es gasto - guardar directamente sin viaje
+            saveTransactionDirectly(transaction, selectedPaymentMethod);
+        }
+    }
+
+    private void showTripAssociationDialog(Transaction transaction, String tripName, long tripId) {
+        new AlertDialog.Builder(requireContext())
+            .setTitle("¿Asociar a viaje activo?")
+            .setMessage("Tienes un viaje activo: \"" + tripName + "\"\n\n¿Deseas registrar este gasto en este viaje?")
+            .setPositiveButton("Sí, asociar", (dialog, which) -> {
+                transaction.setTripId(tripId);
+                saveTransactionDirectly(transaction, selectedPaymentMethod);
+            })
+            .setNegativeButton("No, solo guardar", (dialog, which) -> {
+                saveTransactionDirectly(transaction, selectedPaymentMethod);
+            })
+            .setCancelable(false)
+            .show();
+    }
+
+    private void saveTransactionDirectly(Transaction transaction, PaymentMethod paymentMethod) {
         FinTrackDatabase.databaseWriteExecutor.execute(() -> {
             try {
-                var activeTrip = tripRepository.getActiveTripSync(userId);
-                if (activeTrip != null) {
-                    transaction.setTripId(activeTrip.getTripId());
-                }
-
                 // Guardar la transacción
                 long transactionId = transactionRepository.insertTransactionSync(transaction);
 
@@ -622,17 +688,19 @@ public class AgregarMovimientoFragment extends Fragment {
                 }
 
                 // Actualizar saldos según el método de pago
-                updateBalances(transaction, selectedPaymentMethod);
+                updateBalances(transaction, paymentMethod);
 
                 // Mostrar mensaje en main thread
                 requireActivity().runOnUiThread(() -> {
-                    String typeText = selectedType == Transaction.TransactionType.INCOME ? "Ingreso" :
-                                    selectedType == Transaction.TransactionType.EXPENSE ? "Gasto" : "Transferencia";
-                    String paymentText = selectedPaymentMethod.getDisplayName();
+                    Transaction.TransactionType currentType = transaction.getType();
+                    String typeText = currentType == Transaction.TransactionType.INCOME ? "Ingreso" :
+                                    currentType == Transaction.TransactionType.EXPENSE ? "Gasto" : "Transferencia";
+                    String paymentText = paymentMethod.getDisplayName();
 
                     String successMessage = typeText + " guardado - " + paymentText;
                     if (hasPhoto) successMessage += "\n✓ Foto adjunta";
-                    if (hasLocation) successMessage += "\n✓ Ubicación GPS";
+                    if (hasLocation && currentType == Transaction.TransactionType.EXPENSE) successMessage += "\n✓ Ubicación GPS";
+                    if (transaction.getTripId() != null) successMessage += "\n✓ Asociado al viaje";
 
                     Toast.makeText(requireContext(), successMessage, Toast.LENGTH_LONG).show();
                     Navigation.findNavController(requireView()).navigateUp();
