@@ -12,6 +12,8 @@ import androidx.core.app.NotificationCompat;
 import com.pascm.fintrack.MainActivity;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
+import com.pascm.fintrack.data.local.entity.NotificationEntity;
+import com.pascm.fintrack.data.repository.NotificationRepository;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -32,11 +34,13 @@ public class CreditCardNotificationHelper {
     private final Context context;
     private final NotificationManager notificationManager;
     private final NumberFormat currencyFormat;
+    private final NotificationRepository notificationRepository;
 
     public CreditCardNotificationHelper(Context context) {
         this.context = context.getApplicationContext();
         this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         this.currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
+        this.notificationRepository = new NotificationRepository(context);
         createNotificationChannel();
     }
 
@@ -76,12 +80,16 @@ public class CreditCardNotificationHelper {
                 currencyFormat.format(card.getCurrentBalance())
         );
 
+        // Enviar notificación push
         showNotification(
                 NOTIFICATION_ID_STATEMENT_BASE + (int) card.getCardId(),
                 title,
                 message,
                 "Revisa el estado de tu tarjeta"
         );
+
+        // Crear notificación interna en la base de datos
+        createInternalNotification(card.getUserId(), title, message, "CARD", card.getCardId());
     }
 
     /**
@@ -103,12 +111,16 @@ public class CreditCardNotificationHelper {
                 currencyFormat.format(card.getCurrentBalance())
         );
 
+        // Enviar notificación push
         showNotification(
                 NOTIFICATION_ID_PAYMENT_BASE + (int) card.getCardId(),
                 title,
                 message,
                 "Realiza tu pago ahora"
         );
+
+        // Crear notificación interna en la base de datos
+        createInternalNotification(card.getUserId(), title, message, "CARD", card.getCardId());
     }
 
     /**
@@ -130,12 +142,16 @@ public class CreditCardNotificationHelper {
                 currencyFormat.format(card.getCurrentBalance())
         );
 
+        // Enviar notificación push
         showNotification(
                 NOTIFICATION_ID_PAYMENT_BASE + (int) card.getCardId() + 100,
                 title,
                 message,
                 "Planifica tu pago"
         );
+
+        // Crear notificación interna en la base de datos
+        createInternalNotification(card.getUserId(), title, message, "CARD", card.getCardId());
     }
 
     /**
@@ -172,6 +188,27 @@ public class CreditCardNotificationHelper {
 
         // Show the notification
         notificationManager.notify(notificationId, builder.build());
+    }
+
+    /**
+     * Creates an internal notification in the database
+     *
+     * @param userId          The user ID
+     * @param title           Notification title
+     * @param message         Notification message
+     * @param type            Notification type
+     * @param relatedEntityId ID of related entity (card, transaction, etc.)
+     */
+    private void createInternalNotification(long userId, String title, String message, String type, long relatedEntityId) {
+        NotificationEntity notification = new NotificationEntity();
+        notification.setUserId(userId);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setType(type);
+        notification.setRelatedEntityId(relatedEntityId);
+        notification.setRead(false);
+
+        notificationRepository.createNotification(notification);
     }
 
     /**

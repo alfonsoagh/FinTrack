@@ -62,6 +62,24 @@ public class TransferenciaFragment extends Fragment {
         updateDateDisplay();
         loadPaymentMethods();
 
+        // Verificar si hay datos precargados desde el anuncio de pago
+        if (getArguments() != null) {
+            long creditCardId = getArguments().getLong("creditCardId", -1);
+            double amount = getArguments().getDouble("amount", 0.0);
+            String cardLabel = getArguments().getString("cardLabel", "");
+
+            if (creditCardId != -1 && amount > 0) {
+                // Precargar el monto
+                binding.etAmount.setText(String.format(java.util.Locale.US, "%.2f", amount));
+
+                // Precargar nota
+                binding.etNote.setText("Pago de tarjeta " + cardLabel);
+
+                // La tarjeta de crédito se seleccionará automáticamente cuando se carguen los métodos de pago
+                // mediante el método loadPaymentMethods() que se llama arriba
+            }
+        }
+
         // Botón cerrar
         binding.btnClose.setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp()
@@ -117,20 +135,98 @@ public class TransferenciaFragment extends Fragment {
     }
 
     private void updatePaymentMethodSpinners() {
+        // Configurar spinner "Desde"
+        updateFromSpinnerList();
+
+        // Configurar spinner "Hacia"
+        updateToSpinnerList();
+
+        // Listener para actualizar el spinner "Hacia" cuando cambia "Desde"
+        binding.spinnerFrom.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+                PaymentMethod selected = (PaymentMethod) parent.getItemAtPosition(position);
+                if (selected != null) {
+                    fromMethod = selected;
+                    updateToSpinnerList();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+
+        // Listener para actualizar el spinner "Desde" cuando cambia "Hacia"
+        binding.spinnerTo.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+                PaymentMethod selected = (PaymentMethod) parent.getItemAtPosition(position);
+                if (selected != null) {
+                    toMethod = selected;
+                    updateFromSpinnerList();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private void updateFromSpinnerList() {
+        List<PaymentMethod> filtered = new ArrayList<>();
+        for (PaymentMethod method : paymentMethods) {
+            // Excluir el método seleccionado en "Hacia"
+            if (toMethod == null ||
+                method.getType() != toMethod.getType() ||
+                method.getEntityId() != toMethod.getEntityId()) {
+                filtered.add(method);
+            }
+        }
+
         ArrayAdapter<PaymentMethod> adapter = new ArrayAdapter<>(
                 requireContext(),
                 android.R.layout.simple_spinner_item,
-                paymentMethods
+                filtered
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
         binding.spinnerFrom.setAdapter(adapter);
+
+        // Seleccionar el primer elemento por defecto si fromMethod no está en la lista
+        if (!filtered.isEmpty()) {
+            if (fromMethod == null || !filtered.contains(fromMethod)) {
+                fromMethod = filtered.get(0);
+                binding.spinnerFrom.setSelection(0);
+            }
+        }
+    }
+
+    private void updateToSpinnerList() {
+        List<PaymentMethod> filtered = new ArrayList<>();
+        for (PaymentMethod method : paymentMethods) {
+            // Excluir el método seleccionado en "Desde"
+            if (fromMethod == null ||
+                method.getType() != fromMethod.getType() ||
+                method.getEntityId() != fromMethod.getEntityId()) {
+                filtered.add(method);
+            }
+        }
+
+        ArrayAdapter<PaymentMethod> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                filtered
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerTo.setAdapter(adapter);
 
-        // Seleccionar primer método por defecto
-        if (!paymentMethods.isEmpty()) {
-            fromMethod = paymentMethods.get(0);
-            toMethod = paymentMethods.get(0);
+        // Seleccionar el primer elemento por defecto si toMethod no está en la lista
+        if (!filtered.isEmpty()) {
+            if (toMethod == null || !filtered.contains(toMethod)) {
+                toMethod = filtered.get(0);
+                binding.spinnerTo.setSelection(0);
+            }
         }
     }
 
@@ -178,6 +274,61 @@ public class TransferenciaFragment extends Fragment {
             return;
         }
 
+        // Validar que si el destino es tarjeta de crédito, el origen sea débito o efectivo
+        if (toMethod.getType() == PaymentMethod.Type.CREDIT_CARD) {
+            if (fromMethod.getType() == PaymentMethod.Type.CREDIT_CARD) {
+                Toast.makeText(requireContext(), "Solo puedes pagar tarjetas de crédito desde cuentas de débito o efectivo", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        // Validar saldo suficiente en cuenta origen
+        final double finalAmount = amount;
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+            boolean hasEnoughBalance = checkBalanceAvailability(fromMethod, finalAmount);
+
+            requireActivity().runOnUiThread(() -> {
+                if (!hasEnoughBalance) {
+                    Toast.makeText(requireContext(), "Saldo insuficiente en la cuenta de origen", Toast.LENGTH_LONG).show();
+                } else {
+                    // Continuar con la transferencia
+                    proceedWithTransfer(finalAmount);
+                }
+            });
+        });
+    }
+
+    private boolean checkBalanceAvailability(PaymentMethod method, double amount) {
+        switch (method.getType()) {
+            case DEBIT_CARD:
+                DebitCardEntity debitCard = cardRepository.getDebitCardByIdSync(method.getEntityId());
+                if (debitCard != null) {
+                    long accountId = debitCard.getAccountId();
+                    FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
+                    var account = db.accountDao().getByIdSync(accountId);
+                    if (account != null) {
+                        return account.getBalance() >= amount;
+                    }
+                }
+                return false;
+            case CASH:
+                // Para efectivo siempre permitir por ahora
+                // En el futuro se podría llevar registro de efectivo disponible
+                return true;
+            case CREDIT_CARD:
+                // Las tarjetas de crédito no deberían ser origen para pagos de otras tarjetas
+                // pero si se usa entre cuentas propias, verificar crédito disponible
+                CreditCardEntity creditCard = cardRepository.getCreditCardByIdSync(method.getEntityId());
+                if (creditCard != null) {
+                    return creditCard.getAvailableCredit() >= amount;
+                }
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    private void proceedWithTransfer(double amount) {
         // Obtener nota
         String notes = binding.etNote.getText().toString().trim();
         String transferNote = notes.isEmpty() ?

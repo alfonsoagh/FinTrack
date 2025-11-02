@@ -361,6 +361,7 @@ public class AgregarMovimientoFragment extends Fragment {
             updateTypeButtonsUI();
             updateCategorySpinner();
             updateLocationVisibility();
+            updatePaymentMethodSpinner(); // Actualizar métodos de pago según el tipo
         });
 
         binding.btnGasto.setOnClickListener(v -> {
@@ -368,6 +369,7 @@ public class AgregarMovimientoFragment extends Fragment {
             updateTypeButtonsUI();
             updateCategorySpinner();
             updateLocationVisibility();
+            updatePaymentMethodSpinner(); // Actualizar métodos de pago según el tipo
         });
 
         binding.btnTransferencia.setOnClickListener(v -> {
@@ -375,6 +377,7 @@ public class AgregarMovimientoFragment extends Fragment {
             updateTypeButtonsUI();
             updateCategorySpinner();
             updateLocationVisibility();
+            updatePaymentMethodSpinner(); // Actualizar métodos de pago según el tipo
         });
 
         // Establecer estado inicial (gasto seleccionado por defecto)
@@ -506,20 +509,42 @@ public class AgregarMovimientoFragment extends Fragment {
     }
 
     private void updatePaymentMethodSpinner() {
+        // Filtrar métodos según el tipo de transacción
+        List<PaymentMethod> filteredMethods = filterPaymentMethodsByType(selectedType);
+
         ArrayAdapter<PaymentMethod> adapter = new ArrayAdapter<>(
                 requireContext(),
                 android.R.layout.simple_spinner_item,
-                paymentMethods
+                filteredMethods
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerAccount.setAdapter(adapter);
         binding.spinnerAccountTo.setAdapter(adapter);
 
         // Seleccionar el primer método por defecto (efectivo)
-        if (!paymentMethods.isEmpty()) {
-            selectedPaymentMethod = paymentMethods.get(0);
-            selectedPaymentMethodTo = paymentMethods.get(0);
+        if (!filteredMethods.isEmpty()) {
+            selectedPaymentMethod = filteredMethods.get(0);
+            selectedPaymentMethodTo = filteredMethods.get(0);
         }
+    }
+
+    private List<PaymentMethod> filterPaymentMethodsByType(Transaction.TransactionType type) {
+        List<PaymentMethod> filtered = new ArrayList<>();
+
+        for (PaymentMethod method : paymentMethods) {
+            // Para ingresos, solo permitir débito y efectivo
+            if (type == Transaction.TransactionType.INCOME) {
+                if (method.getType() == PaymentMethod.Type.CASH ||
+                    method.getType() == PaymentMethod.Type.DEBIT_CARD) {
+                    filtered.add(method);
+                }
+            } else {
+                // Para gastos y transferencias, permitir todos
+                filtered.add(method);
+            }
+        }
+
+        return filtered;
     }
 
     private void saveTransaction() {
@@ -572,11 +597,80 @@ public class AgregarMovimientoFragment extends Fragment {
                 return;
             }
 
-            // Procesar transferencia
-            performTransfer(amount);
+            // Validar que si el destino es tarjeta de crédito, el origen sea débito o efectivo
+            if (selectedPaymentMethodTo.getType() == PaymentMethod.Type.CREDIT_CARD) {
+                if (selectedPaymentMethod.getType() == PaymentMethod.Type.CREDIT_CARD) {
+                    Toast.makeText(requireContext(), "Solo puedes pagar tarjetas de crédito desde cuentas de débito o efectivo", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            // Validar saldo suficiente antes de transferir
+            FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+                boolean hasEnoughBalance = checkBalanceAvailability(selectedPaymentMethod, amount);
+
+                requireActivity().runOnUiThread(() -> {
+                    if (!hasEnoughBalance) {
+                        Toast.makeText(requireContext(), "Saldo insuficiente en la cuenta de origen", Toast.LENGTH_LONG).show();
+                    } else {
+                        // Procesar transferencia
+                        performTransfer(amount);
+                    }
+                });
+            });
             return;
         }
 
+        // Validar saldo suficiente para gastos
+        if (selectedType == Transaction.TransactionType.EXPENSE) {
+            FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+                boolean hasEnoughBalance = checkBalanceAvailability(selectedPaymentMethod, amount);
+
+                requireActivity().runOnUiThread(() -> {
+                    if (!hasEnoughBalance) {
+                        Toast.makeText(requireContext(), "Saldo insuficiente en la cuenta seleccionada", Toast.LENGTH_LONG).show();
+                    } else {
+                        // Continuar con el guardado de la transacción
+                        proceedWithSaveTransaction(amount);
+                    }
+                });
+            });
+            return;
+        }
+
+        // Para ingresos, proceder directamente (no necesitan validación de saldo)
+        proceedWithSaveTransaction(amount);
+    }
+
+    private boolean checkBalanceAvailability(PaymentMethod method, double amount) {
+        switch (method.getType()) {
+            case DEBIT_CARD:
+                DebitCardEntity debitCard = cardRepository.getDebitCardByIdSync(method.getEntityId());
+                if (debitCard != null) {
+                    long accountId = debitCard.getAccountId();
+                    FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
+                    var account = db.accountDao().getByIdSync(accountId);
+                    if (account != null) {
+                        return account.getBalance() >= amount;
+                    }
+                }
+                return false;
+            case CASH:
+                // Para efectivo siempre permitir por ahora
+                // En el futuro se podría llevar registro de efectivo disponible
+                return true;
+            case CREDIT_CARD:
+                CreditCardEntity creditCard = cardRepository.getCreditCardByIdSync(method.getEntityId());
+                if (creditCard != null) {
+                    return creditCard.getAvailableCredit() >= amount;
+                }
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    private void proceedWithSaveTransaction(double amount) {
         // Obtener nota (opcional)
         String notes = binding.etNote.getText().toString().trim();
 

@@ -26,6 +26,7 @@ import java.util.Locale;
 public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.CardViewHolder> {
 
     private List<DebitCardEntity> cards;
+    private java.util.Map<Long, Double> balances; // accountId -> balance
     private OnCardClickListener listener;
     private final DateTimeFormatter expiryFormatter = DateTimeFormatter.ofPattern("MM/yy");
     private final NumberFormat currencyFormat;
@@ -36,12 +37,18 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
 
     public DebitCardAdapter() {
         this.cards = new ArrayList<>();
-        this.currencyFormat = NumberFormat.getNumberInstance(Locale.US);
-        this.currencyFormat.setMaximumFractionDigits(0);
+        this.balances = new java.util.HashMap<>();
+        this.currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
+        this.currencyFormat.setMaximumFractionDigits(2);
     }
 
     public void setCards(List<DebitCardEntity> cards) {
         this.cards = cards;
+        notifyDataSetChanged();
+    }
+
+    public void setBalances(java.util.Map<Long, Double> balances) {
+        this.balances = balances;
         notifyDataSetChanged();
     }
 
@@ -60,7 +67,8 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
         DebitCardEntity card = cards.get(position);
-        holder.bind(card, listener, expiryFormatter, currencyFormat);
+        Double balance = balances.get(card.getAccountId());
+        holder.bind(card, balance, listener, expiryFormatter, currencyFormat);
     }
 
     @Override
@@ -86,14 +94,18 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
             imgBrandLogo = itemView.findViewById(R.id.imgBrandLogo);
         }
 
-        public void bind(DebitCardEntity card, OnCardClickListener listener, DateTimeFormatter expiryFormatter,
+        public void bind(DebitCardEntity card, Double balance, OnCardClickListener listener, DateTimeFormatter expiryFormatter,
                          NumberFormat currencyFormat) {
             txtBankName.setText(card.getIssuer());
             txtCardAlias.setText(card.getLabel());
             txtCardNumber.setText("•••• •••• •••• " + (card.getPanLast4() != null ? card.getPanLast4() : "0000"));
 
-            // Balance comes from the linked account - for now show "-"
-            txtCardBalance.setText("–");
+            // Balance comes from the linked account
+            if (balance != null) {
+                txtCardBalance.setText(currencyFormat.format(balance));
+            } else {
+                txtCardBalance.setText("$0.00");
+            }
 
             // Configurar el gradiente de fondo
             CreditCard.CardGradient gradient;

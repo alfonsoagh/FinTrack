@@ -12,6 +12,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.card.MaterialCardView;
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
 import com.pascm.fintrack.data.repository.CardRepository;
@@ -26,8 +27,10 @@ public class CreditCardsFragment extends Fragment {
 
     private RecyclerView rvCreditCards;
     private View emptyStateContainer;
+    private MaterialCardView cardPaymentNotice;
     private CreditCardAdapter adapter;
     private CardRepository cardRepository;
+    private List<CreditCardEntity> pendingPaymentCards = new ArrayList<>();
 
     @Nullable
     @Override
@@ -62,6 +65,12 @@ public class CreditCardsFragment extends Fragment {
         // Empty state container
         emptyStateContainer = view.findViewById(R.id.emptyStateContainer);
 
+        // Payment notice card
+        cardPaymentNotice = view.findViewById(R.id.cardPaymentNotice);
+        if (cardPaymentNotice != null) {
+            cardPaymentNotice.setOnClickListener(v -> navigateToPaymentTransfer());
+        }
+
         // RecyclerView
         rvCreditCards = view.findViewById(R.id.rvCreditCards);
         rvCreditCards.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -78,12 +87,52 @@ public class CreditCardsFragment extends Fragment {
         cardRepository.getAllCreditCards(userId).observe(getViewLifecycleOwner(), entities -> {
             if (entities != null && !entities.isEmpty()) {
                 adapter.setCards(entities);
+
+                // Detectar tarjetas pendientes de pago (en periodo de pago)
+                pendingPaymentCards.clear();
+                for (CreditCardEntity card : entities) {
+                    if (card.isInPaymentPeriod() && card.getCurrentBalance() > 0) {
+                        pendingPaymentCards.add(card);
+                    }
+                }
+
+                // Mostrar u ocultar anuncio de pago pendiente
+                if (!pendingPaymentCards.isEmpty() && cardPaymentNotice != null) {
+                    cardPaymentNotice.setVisibility(View.VISIBLE);
+                } else if (cardPaymentNotice != null) {
+                    cardPaymentNotice.setVisibility(View.GONE);
+                }
+
                 showContent();
             } else {
                 adapter.setCards(new ArrayList<>());
+                pendingPaymentCards.clear();
+                if (cardPaymentNotice != null) {
+                    cardPaymentNotice.setVisibility(View.GONE);
+                }
                 showEmptyState();
             }
         });
+    }
+
+    private void navigateToPaymentTransfer() {
+        if (pendingPaymentCards.isEmpty()) {
+            return;
+        }
+
+        // Tomar la primera tarjeta pendiente de pago
+        CreditCardEntity card = pendingPaymentCards.get(0);
+
+        // Navegar a la pantalla de transferencia con los datos precargados
+        Bundle args = new Bundle();
+        args.putLong("creditCardId", card.getCardId());
+        args.putDouble("amount", card.getCurrentBalance());
+        args.putString("cardLabel", card.getIssuer() + " - " + card.getLabel());
+
+        Navigation.findNavController(requireView()).navigate(
+            R.id.action_creditCards_to_transferencia,
+            args
+        );
     }
 
     private void showEmptyState() {

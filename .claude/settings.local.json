@@ -19,7 +19,8 @@
       "Bash(gradlew.bat clean build:*)",
       "Bash(.\\gradlew.bat assembleDebug:*)",
       "Bash(gradlew.bat assembleDebug:*)",
-      "Bash(cmd /c gradlew.bat assembleDebug)"
+      "Bash(cmd /c gradlew.bat assembleDebug)",
+      "Bash(cmd /c \"gradlew.bat assembleDebug\")"
     ],
     "deny": [],
     "ask": []

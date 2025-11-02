@@ -267,6 +267,9 @@
         <action
             android:id="@+id/action_creditCards_to_editCreditCard"
             app:destination="@id/editCreditCardFragment" />
+        <action
+            android:id="@+id/action_creditCards_to_transferencia"
+            app:destination="@id/transferenciaFragment" />
     </fragment>
 
     <fragment

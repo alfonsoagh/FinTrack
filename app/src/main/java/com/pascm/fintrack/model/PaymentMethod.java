@@ -52,4 +52,19 @@ public class PaymentMethod {
     public String toString() {
         return displayName + (details != null && !details.isEmpty() ? " - " + details : "");
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        PaymentMethod that = (PaymentMethod) obj;
+        return entityId == that.entityId && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + (int) (entityId ^ (entityId >>> 32));
+        return result;
+    }
 }

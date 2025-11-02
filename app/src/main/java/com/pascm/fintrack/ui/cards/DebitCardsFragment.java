@@ -93,11 +93,33 @@ public class DebitCardsFragment extends Fragment {
         cardRepository.getAllDebitCards(userId).observe(getViewLifecycleOwner(), entities -> {
             if (entities != null && !entities.isEmpty()) {
                 adapter.setCards(entities);
+
+                // Cargar saldos de las cuentas asociadas
+                loadBalances(entities);
+
                 showContent();
             } else {
                 adapter.setCards(new ArrayList<>());
                 showEmptyState();
             }
+        });
+    }
+
+    private void loadBalances(List<DebitCardEntity> cards) {
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+            Map<Long, Double> balances = new HashMap<>();
+
+            for (DebitCardEntity card : cards) {
+                long accountId = card.getAccountId();
+                Account account = accountDao.getByIdSync(accountId);
+                if (account != null) {
+                    balances.put(accountId, account.getBalance());
+                }
+            }
+
+            requireActivity().runOnUiThread(() -> {
+                adapter.setBalances(balances);
+            });
         });
     }
 

@@ -58,6 +58,75 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/headerContainer" />
 
+    <!-- Anuncio de Pago Pendiente -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPaymentNotice"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#FFF3E0"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/txtSubtitle"
+        app:strokeColor="#FF9800"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:contentDescription="Alerta"
+                android:src="@drawable/ic_warning"
+                app:tint="#FF9800" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvPaymentNoticeTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pendiente de pago"
+                    android:textColor="#E65100"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvPaymentNoticeMessage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Tienes tarjetas con fecha de corte próxima o vencida"
+                    android:textColor="#BF360C"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:contentDescription="Ir a pagar"
+                android:src="@drawable/ic_arrow_right"
+                app:tint="#FF9800" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
     <!-- Empty state container (oculto por defecto) -->
     <LinearLayout
         android:id="@+id/emptyStateContainer"
@@ -67,7 +136,7 @@
         android:gravity="center"
         android:padding="24dp"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/txtSubtitle"
+        app:layout_constraintTop_toBottomOf="@id/cardPaymentNotice"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -99,7 +168,7 @@
         android:clipToPadding="false"
         android:paddingBottom="80dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/txtSubtitle" />
+        app:layout_constraintTop_toBottomOf="@id/cardPaymentNotice" />
 
     <!-- FAB flotante -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
