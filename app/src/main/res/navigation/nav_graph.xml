@@ -88,6 +88,9 @@
             android:id="@+id/action_modo_viaje_to_viaje_activo"
             app:destination="@id/viajeActivoFragment" />
         <action
+            android:id="@+id/action_modo_viaje_to_tripMap"
+            app:destination="@id/tripMapFragment" />
+        <action
             android:id="@+id/action_modo_viaje_to_home"
             app:destination="@id/homeFragment"
             app:popUpTo="@id/homeFragment"

@@ -42,15 +42,14 @@ public class EditCreditCardFragment extends Fragment {
     private CreditCardEntity existingCard;
 
     private TextInputEditText edtBankName, edtCardAlias, edtCardNumber;
-    private TextInputEditText edtCreditLimit, edtCurrentBalance;
-    private TextInputEditText edtStatementDay, edtDueDay;
+    private TextInputEditText edtCreditLimit, edtStatementDay, edtDueDay;
     private RadioGroup rgBrand;
 
     // Vista previa
     private View previewCardMaterial;
     private ConstraintLayout previewCardContainer;
     private TextView previewBankName, previewCardAlias, previewBrandText;
-    private TextView previewCardNumber, previewAvailable;
+    private TextView previewCardNumber, previewAvailable, previewAvailableLabel;
     private TextView previewStatementDate, previewDueDate;
 
     private CreditCard.CardGradient selectedGradient = CreditCard.CardGradient.VIOLET;
@@ -109,9 +108,7 @@ public class EditCreditCardFragment extends Fragment {
                 if (card.getCreditLimit() > 0) {
                     edtCreditLimit.setText(String.valueOf(card.getCreditLimit()));
                 }
-                if (card.getCurrentBalance() > 0) {
-                    edtCurrentBalance.setText(String.valueOf(card.getCurrentBalance()));
-                }
+                // Eliminado el setText para edtCurrentBalance ya que no es editable
 
                 // Set brand radio button
                 String brand = card.getBrand() != null ? card.getBrand().toLowerCase() : "visa";
@@ -133,12 +130,18 @@ public class EditCreditCardFragment extends Fragment {
                 // Set dates
                 if (card.getStatementDay() != null) {
                     LocalDate now = LocalDate.now();
-                    nextStatementDate = LocalDate.of(now.getYear(), now.getMonth(), card.getStatementDay());
+                    // Validar que el día sea válido para el mes actual
+                    int maxDayInMonth = now.lengthOfMonth();
+                    int statementDay = Math.min(card.getStatementDay(), maxDayInMonth);
+                    nextStatementDate = LocalDate.of(now.getYear(), now.getMonth(), statementDay);
                     edtStatementDay.setText(nextStatementDate.format(dateFormatter));
                 }
                 if (card.getPaymentDueDay() != null) {
                     LocalDate now = LocalDate.now();
-                    nextPaymentDate = LocalDate.of(now.getYear(), now.getMonth(), card.getPaymentDueDay());
+                    // Validar que el día sea válido para el mes actual
+                    int maxDayInMonth = now.lengthOfMonth();
+                    int paymentDay = Math.min(card.getPaymentDueDay(), maxDayInMonth);
+                    nextPaymentDate = LocalDate.of(now.getYear(), now.getMonth(), paymentDay);
                     edtDueDay.setText(nextPaymentDate.format(dateFormatter));
                 }
 
@@ -163,7 +166,6 @@ public class EditCreditCardFragment extends Fragment {
         edtCardAlias = view.findViewById(R.id.edtCardAlias);
         edtCardNumber = view.findViewById(R.id.edtCardNumber);
         edtCreditLimit = view.findViewById(R.id.edtCreditLimit);
-        edtCurrentBalance = view.findViewById(R.id.edtCurrentBalance);
         edtStatementDay = view.findViewById(R.id.edtStatementDay);
         edtDueDay = view.findViewById(R.id.edtDueDay);
         rgBrand = view.findViewById(R.id.rgBrand);
@@ -177,6 +179,7 @@ public class EditCreditCardFragment extends Fragment {
         previewBrandText = previewCard.findViewById(R.id.previewBrandText);
         previewCardNumber = previewCard.findViewById(R.id.previewCardNumber);
         previewAvailable = previewCard.findViewById(R.id.previewAvailable);
+        previewAvailableLabel = previewCard.findViewById(R.id.previewAvailableLabel);
         previewStatementDate = previewCard.findViewById(R.id.previewStatementDate);
         previewDueDate = previewCard.findViewById(R.id.previewDueDate);
 
@@ -206,7 +209,7 @@ public class EditCreditCardFragment extends Fragment {
         edtBankName.addTextChangedListener(previewUpdater);
         edtCardAlias.addTextChangedListener(previewUpdater);
         edtCreditLimit.addTextChangedListener(previewUpdater);
-        edtCurrentBalance.addTextChangedListener(previewUpdater);
+        // Eliminado edtCurrentBalance de los listeners ya que no es editable
 
         // Date pickers for statement and payment dates
         edtStatementDay.setOnClickListener(v -> showStatementDatePicker());
@@ -304,9 +307,7 @@ public class EditCreditCardFragment extends Fragment {
         try {
             double limit = edtCreditLimit != null && edtCreditLimit.getText() != null
                     ? Double.parseDouble(edtCreditLimit.getText().toString().replaceAll("[^0-9.]", "")) : 0;
-            double balance = edtCurrentBalance != null && edtCurrentBalance.getText() != null
-                    ? Double.parseDouble(edtCurrentBalance.getText().toString().replaceAll("[^0-9.]", "")) : 0;
-            double available = Math.max(0, limit - balance);
+            double available = Math.max(0, limit);
             previewAvailable.setText(currencyFormat.format(available));
         } catch (NumberFormatException e) {
             previewAvailable.setText("—");
@@ -323,6 +324,27 @@ public class EditCreditCardFragment extends Fragment {
         } else {
             previewDueDate.setText("Pago: —");
         }
+
+        // Actualizar el color del texto según el gradiente seleccionado
+        updateTextColors();
+    }
+
+    private void updateTextColors() {
+        int textColor = (selectedGradient == CreditCard.CardGradient.SILVER ||
+                         selectedGradient == CreditCard.CardGradient.GOLD)
+                ? getResources().getColor(android.R.color.black)
+                : getResources().getColor(android.R.color.white);
+
+        previewBankName.setTextColor(textColor);
+        previewCardAlias.setTextColor(textColor);
+        previewBrandText.setTextColor(textColor);
+        previewCardNumber.setTextColor(textColor);
+        previewAvailable.setTextColor(textColor);
+        if (previewAvailableLabel != null) {
+            previewAvailableLabel.setTextColor(textColor);
+        }
+        previewStatementDate.setTextColor(textColor);
+        previewDueDate.setTextColor(textColor);
     }
 
     private void updatePreviewGradient() {
@@ -339,6 +361,9 @@ public class EditCreditCardFragment extends Fragment {
             );
             gradientDrawable.setCornerRadius(16 * getResources().getDisplayMetrics().density);
             previewCardContainer.setBackground(gradientDrawable);
+
+            // Actualizar colores de texto después de cambiar el gradiente
+            updateTextColors();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -365,18 +390,14 @@ public class EditCreditCardFragment extends Fragment {
         String bankName = edtBankName.getText().toString().trim();
         String alias = edtCardAlias.getText().toString().trim();
 
-        // Parsear límite y balance
+        // Parsear límite de crédito
         double creditLimit = 0;
-        double currentBalance = 0;
         try {
             if (edtCreditLimit.getText() != null && !edtCreditLimit.getText().toString().trim().isEmpty()) {
                 creditLimit = Double.parseDouble(edtCreditLimit.getText().toString().replaceAll("[^0-9.]", ""));
             }
-            if (edtCurrentBalance.getText() != null && !edtCurrentBalance.getText().toString().trim().isEmpty()) {
-                currentBalance = Double.parseDouble(edtCurrentBalance.getText().toString().replaceAll("[^0-9.]", ""));
-            }
         } catch (NumberFormatException e) {
-            Toast.makeText(requireContext(), "Verifica los montos ingresados", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Verifica el límite de crédito ingresado", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -384,11 +405,11 @@ public class EditCreditCardFragment extends Fragment {
         Integer statementDay = nextStatementDate != null ? nextStatementDate.getDayOfMonth() : null;
         Integer dueDay = nextPaymentDate != null ? nextPaymentDate.getDayOfMonth() : null;
 
-        // Actualizar la tarjeta existente
+        // Actualizar la tarjeta existente (manteniendo el saldo currentBalance sin cambios)
         existingCard.setIssuer(bankName);
         existingCard.setLabel(alias);
         existingCard.setCreditLimit(creditLimit);
-        existingCard.setCurrentBalance(currentBalance);
+        // No modificamos el currentBalance ya que se calcula automáticamente
         existingCard.setStatementDay(statementDay);
         existingCard.setPaymentDueDay(dueDay);
         existingCard.setGradient(selectedGradient.name());

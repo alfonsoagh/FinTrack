@@ -83,6 +83,8 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
         private final TextView txtCardNumber;
         private final TextView txtCardBalance;
         private final ImageView imgBrandLogo;
+        private final ImageView imgCardIcon;
+        private final TextView txtBalanceLabelDebit;
 
         public CardViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -92,6 +94,8 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
             txtCardNumber = itemView.findViewById(R.id.txtCardNumber);
             txtCardBalance = itemView.findViewById(R.id.txtCardBalance);
             imgBrandLogo = itemView.findViewById(R.id.imgBrandLogo);
+            imgCardIcon = itemView.findViewById(R.id.imgCardIcon);
+            txtBalanceLabelDebit = itemView.findViewById(R.id.txtBalanceLabelDebit);
         }
 
         public void bind(DebitCardEntity card, Double balance, OnCardClickListener listener, DateTimeFormatter expiryFormatter,
@@ -104,7 +108,7 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
             if (balance != null) {
                 txtCardBalance.setText(currencyFormat.format(balance));
             } else {
-                txtCardBalance.setText("$0.00");
+                txtCardBalance.setText("—");
             }
 
             // Configurar el gradiente de fondo
@@ -130,6 +134,21 @@ public class DebitCardAdapter extends RecyclerView.Adapter<DebitCardAdapter.Card
             );
             gradientDrawable.setCornerRadius(24 * itemView.getContext().getResources().getDisplayMetrics().density);
             cardContainer.setBackground(gradientDrawable);
+
+            // Actualizar el color del texto según el gradiente seleccionado
+            int textColor = (gradient == CreditCard.CardGradient.SILVER ||
+                             gradient == CreditCard.CardGradient.GOLD)
+                    ? itemView.getContext().getResources().getColor(android.R.color.black)
+                    : itemView.getContext().getResources().getColor(android.R.color.white);
+
+            txtBankName.setTextColor(textColor);
+            txtCardAlias.setTextColor(textColor);
+            txtCardNumber.setTextColor(textColor);
+            txtCardBalance.setTextColor(textColor);
+            txtBalanceLabelDebit.setTextColor(textColor);
+
+            // Aplicar color al ícono de la tarjeta
+            imgCardIcon.setColorFilter(textColor);
 
             // Configurar el logo de la marca
             int logoRes = "visa".equalsIgnoreCase(card.getBrand())

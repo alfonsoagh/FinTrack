@@ -282,6 +282,7 @@
                             android:layout_weight="1"
                             android:background="@drawable/bg_rounded_input"
                             android:gravity="center"
+                            android:minHeight="72dp"
                             android:orientation="vertical"
                             android:padding="12dp">
 
@@ -311,6 +312,7 @@
                             android:layout_weight="1"
                             android:background="@drawable/bg_rounded_input"
                             android:gravity="center"
+                            android:minHeight="72dp"
                             android:orientation="vertical"
                             android:padding="12dp">
 
@@ -339,6 +341,7 @@
                             android:layout_weight="1"
                             android:background="@drawable/bg_rounded_input"
                             android:gravity="center"
+                            android:minHeight="72dp"
                             android:orientation="vertical"
                             android:padding="12dp">
 
@@ -355,7 +358,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="Comida"
+                                android:text="---"
                                 android:textColor="?attr/colorOnSurface"
                                 android:textSize="10sp"
                                 android:textStyle="bold" />

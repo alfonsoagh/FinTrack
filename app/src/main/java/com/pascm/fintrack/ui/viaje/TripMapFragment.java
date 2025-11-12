@@ -1,5 +1,6 @@
 package com.pascm.fintrack.ui.viaje;
 
+import android.Manifest;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -9,12 +10,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -33,6 +38,7 @@ import com.pascm.fintrack.util.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class TripMapFragment extends Fragment implements OnMapReadyCallback {
 
@@ -41,6 +47,21 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
     private TransactionRepository transactionRepository;
     private Trip currentTrip;
     private List<Transaction> tripTransactions = new ArrayList<>();
+
+    // Ubicación del usuario
+    private FusedLocationProviderClient fusedLocationClient;
+    private LatLng userLatLng;
+
+    private final ActivityResultLauncher<String[]> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                Boolean fine = result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false);
+                Boolean coarse = result.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false);
+                if (Boolean.TRUE.equals(fine) || Boolean.TRUE.equals(coarse)) {
+                    enableMyLocationAndFetch();
+                } else {
+                    Toast.makeText(requireContext(), "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show();
+                }
+            });
 
     @Nullable
     @Override
@@ -56,6 +77,9 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
         // Initialize repositories
         tripRepository = new TripRepository(requireContext());
         transactionRepository = new TransactionRepository(requireContext());
+
+        // Init fused location
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
         // Back button
         view.findViewById(R.id.btn_back).setOnClickListener(v ->
@@ -86,6 +110,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                                 // Update map if ready
                                 if (map != null) {
                                     setupMapMarkers();
+                                    updateCamera();
                                 }
                             }
                         });
@@ -99,11 +124,51 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(@NonNull GoogleMap googleMap) {
         map = googleMap;
         map.getUiSettings().setZoomControlsEnabled(true);
-        map.getUiSettings().setMyLocationButtonEnabled(false);
+        map.getUiSettings().setMyLocationButtonEnabled(true);
+
+        // Intentar habilitar mi ubicación y obtener última ubicación
+        checkAndRequestLocationPermissions();
 
         // Setup markers if data is loaded
         if (currentTrip != null) {
             setupMapMarkers();
+            updateCamera();
+        }
+    }
+
+    private void checkAndRequestLocationPermissions() {
+        boolean fineGranted = androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        if (fineGranted || coarseGranted) {
+            enableMyLocationAndFetch();
+        } else {
+            locationPermissionLauncher.launch(new String[]{
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        }
+    }
+
+    private void enableMyLocationAndFetch() {
+        if (map == null) return;
+        try {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+                    androidx.core.content.ContextCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                map.setMyLocationEnabled(true);
+
+                fusedLocationClient.getLastLocation()
+                        .addOnSuccessListener(location -> {
+                            if (location != null) {
+                                userLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                                updateCamera();
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            // ignore; fallback a markers
+                        });
+            }
+        } catch (SecurityException se) {
+            // permisos pueden haber cambiado
         }
     }
 
@@ -159,7 +224,7 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
                         ? transaction.getNotes()
                         : "Gasto";
 
-                String snippet = String.format("$%.2f %s",
+                String snippet = String.format(Locale.getDefault(), "$%.2f %s",
                         transaction.getAmount(),
                         transaction.getCurrencyCode());
 
@@ -174,30 +239,50 @@ public class TripMapFragment extends Fragment implements OnMapReadyCallback {
             }
         }
 
-        // Ajustar la cámara para mostrar todos los marcadores
-        if (!allPoints.isEmpty()) {
-            LatLngBounds.Builder builder = new LatLngBounds.Builder();
-            for (LatLng point : allPoints) {
-                builder.include(point);
-            }
-            LatLngBounds bounds = builder.build();
+        // Guardar puntos para updateCamera (se retoman de las capas actuales)
+        // No centramos aquí; updateCamera() lo hará considerando userLatLng
+    }
 
-            // Añadir padding (100px) para que los marcadores no estén en el borde
+    private void updateCamera() {
+        if (map == null) return;
+
+        List<LatLng> points = new ArrayList<>();
+
+        // Recoger puntos visibles desde los datos actuales
+        if (currentTrip != null) {
+            if (currentTrip.getOriginLatitude() != null && currentTrip.getOriginLongitude() != null) {
+                points.add(new LatLng(currentTrip.getOriginLatitude(), currentTrip.getOriginLongitude()));
+            }
+            if (currentTrip.getDestinationLatitude() != null && currentTrip.getDestinationLongitude() != null) {
+                points.add(new LatLng(currentTrip.getDestinationLatitude(), currentTrip.getDestinationLongitude()));
+            }
+        }
+        for (Transaction t : tripTransactions) {
+            if (t.getLatitude() != null && t.getLongitude() != null) {
+                points.add(new LatLng(t.getLatitude(), t.getLongitude()));
+            }
+        }
+        if (userLatLng != null) {
+            points.add(userLatLng);
+        }
+
+        if (!points.isEmpty()) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            for (LatLng p : points) builder.include(p);
             try {
-                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100));
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 100));
             } catch (Exception e) {
-                // Si falla, centrar en el primer punto
-                if (!allPoints.isEmpty()) {
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(allPoints.get(0), 10f));
+                // fallback a centrar en mi posición si existe
+                if (userLatLng != null) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12f));
+                } else if (!points.isEmpty()) {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(0), 10f));
                 }
             }
         } else {
-            // Si no hay puntos, centrar en México
+            // Fallback global
             LatLng mexico = new LatLng(19.4326, -99.1332);
             map.moveCamera(CameraUpdateFactory.newLatLngZoom(mexico, 5f));
-            Toast.makeText(requireContext(),
-                    "No hay ubicaciones registradas para este viaje",
-                    Toast.LENGTH_SHORT).show();
         }
     }
 

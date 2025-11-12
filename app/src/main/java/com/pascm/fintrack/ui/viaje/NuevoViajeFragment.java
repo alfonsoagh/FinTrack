@@ -34,6 +34,8 @@ import com.pascm.fintrack.databinding.FragmentNuevoViajeBinding;
 import com.pascm.fintrack.ui.lugar.MapPickerActivity;
 import com.pascm.fintrack.util.LocationPermissionHelper;
 import com.pascm.fintrack.util.SessionManager;
+import com.pascm.fintrack.data.repository.UserRepository;
+import com.pascm.fintrack.data.local.entity.UserProfile;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -51,6 +53,7 @@ public class NuevoViajeFragment extends Fragment {
     private LocalDate startDate;
     private LocalDate endDate;
     private String selectedCurrency = "MXN";
+    private UserRepository userRepository;
 
     // Coordenadas de origen y destino
     private Double originLatitude;
@@ -134,6 +137,7 @@ public class NuevoViajeFragment extends Fragment {
 
         // Initialize repository and location services
         tripRepository = new TripRepository(requireContext());
+        userRepository = new UserRepository(requireContext());
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
         locationManager = (LocationManager) requireContext().getSystemService(Context.LOCATION_SERVICE);
 
@@ -143,21 +147,34 @@ public class NuevoViajeFragment extends Fragment {
     }
 
     private void setupCurrencySpinner() {
+        // Mostrar lista pero DESHABILITADA; y seleccionar la moneda del perfil de usuario
         String[] currencies = getResources().getStringArray(R.array.currencies);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_spinner_item, currencies);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerCurrency.setAdapter(adapter);
 
-        // Set MXN as default
-        int mxnPosition = 0;
-        for (int i = 0; i < currencies.length; i++) {
-            if (currencies[i].contains("MXN")) {
-                mxnPosition = i;
-                break;
+        // Deshabilitar interacción
+        binding.spinnerCurrency.setEnabled(false);
+        binding.spinnerCurrency.setClickable(false);
+        binding.spinnerCurrency.setAlpha(0.6f);
+
+        long userId = SessionManager.getUserId(requireContext());
+        userRepository.getUserProfile(userId).observe(getViewLifecycleOwner(), profile -> {
+            String currency = (profile != null && profile.getDefaultCurrency() != null && !profile.getDefaultCurrency().isEmpty())
+                    ? profile.getDefaultCurrency()
+                    : "MXN";
+            selectedCurrency = currency;
+
+            // Seleccionar índice del spinner que contenga el código (ej: "MXN")
+            int index = 0;
+            for (int i = 0; i < currencies.length; i++) {
+                if (currencies[i] != null && currencies[i].toUpperCase().contains(currency.toUpperCase())) {
+                    index = i; break;
+                }
             }
-        }
-        binding.spinnerCurrency.setSelection(mxnPosition);
+            binding.spinnerCurrency.setSelection(index);
+        });
     }
 
     private void setupDatePickers() {
@@ -230,14 +247,44 @@ public class NuevoViajeFragment extends Fragment {
 
         // Botón seleccionar origen en mapa
         binding.btnSelectOriginMap.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), MapPickerActivity.class);
-            originMapPickerLauncher.launch(intent);
+            // Verificar permisos antes de abrir el mapa
+            if (!LocationPermissionHelper.hasFineLocationPermission(requireContext())) {
+                if (LocationPermissionHelper.shouldShowLocationRationale(requireActivity())) {
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Permiso de ubicación necesario")
+                            .setMessage("Para seleccionar ubicaciones en el mapa, necesitamos acceso a tu ubicación.")
+                            .setPositiveButton("Conceder permiso", (dialog, which) ->
+                                    LocationPermissionHelper.requestLocationPermission(requireActivity()))
+                            .setNegativeButton("Cancelar", null)
+                            .show();
+                } else {
+                    LocationPermissionHelper.requestLocationPermission(requireActivity());
+                }
+            } else {
+                Intent intent = new Intent(requireContext(), MapPickerActivity.class);
+                originMapPickerLauncher.launch(intent);
+            }
         });
 
         // Botón seleccionar destino en mapa
         binding.btnSelectDestinationMap.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), MapPickerActivity.class);
-            destinationMapPickerLauncher.launch(intent);
+            // Verificar permisos antes de abrir el mapa
+            if (!LocationPermissionHelper.hasFineLocationPermission(requireContext())) {
+                if (LocationPermissionHelper.shouldShowLocationRationale(requireActivity())) {
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle("Permiso de ubicación necesario")
+                            .setMessage("Para seleccionar ubicaciones en el mapa, necesitamos acceso a tu ubicación.")
+                            .setPositiveButton("Conceder permiso", (dialog, which) ->
+                                    LocationPermissionHelper.requestLocationPermission(requireActivity()))
+                            .setNegativeButton("Cancelar", null)
+                            .show();
+                } else {
+                    LocationPermissionHelper.requestLocationPermission(requireActivity());
+                }
+            } else {
+                Intent intent = new Intent(requireContext(), MapPickerActivity.class);
+                destinationMapPickerLauncher.launch(intent);
+            }
         });
 
         // Botón guardar viaje
@@ -458,9 +505,8 @@ public class NuevoViajeFragment extends Fragment {
             return;
         }
 
-        // Obtener moneda seleccionada
-        String currencySelection = binding.spinnerCurrency.getSelectedItem().toString();
-        selectedCurrency = currencySelection.substring(0, 3); // Extraer código (MXN, USD, etc.)
+        // Moneda: forzada a la del perfil del usuario (spinner bloqueado solo muestra)
+        String currencyCode = (selectedCurrency != null && !selectedCurrency.isEmpty()) ? selectedCurrency : "MXN";
 
         // Crear objeto Trip
         Trip trip = new Trip();
@@ -478,7 +524,7 @@ public class NuevoViajeFragment extends Fragment {
         trip.setStartDate(startDate);
         trip.setEndDate(endDate);
         trip.setBudgetAmount(budget); // Ya validado como obligatorio
-        trip.setCurrencyCode(selectedCurrency);
+        trip.setCurrencyCode(currencyCode);
         trip.setStatus(Trip.TripStatus.ACTIVE);
 
         // Guardar en base de datos

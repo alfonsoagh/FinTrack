@@ -7,20 +7,20 @@ import androidx.lifecycle.LiveData;
 import com.pascm.fintrack.data.local.FinTrackDatabase;
 import com.pascm.fintrack.data.local.dao.MerchantDao;
 import com.pascm.fintrack.data.local.entity.Merchant;
+import com.pascm.fintrack.util.SessionManager;
 
 import java.time.Instant;
 import java.util.List;
 
 /**
  * Repository for managing places/merchants.
- *
- * This repository provides a clean API for managing places (merchants)
- * where transactions occur. All write operations are executed asynchronously.
+ * Ahora filtra y persiste por usuario (user_id).
  */
 public class PlaceRepository {
 
     private final MerchantDao merchantDao;
     private final FinTrackDatabase database;
+    private final Context context;
 
     /**
      * Constructor - initializes database and DAOs.
@@ -28,8 +28,13 @@ public class PlaceRepository {
      * @param context Application context
      */
     public PlaceRepository(Context context) {
-        this.database = FinTrackDatabase.getDatabase(context);
+        this.context = context.getApplicationContext();
+        this.database = FinTrackDatabase.getDatabase(this.context);
         this.merchantDao = database.merchantDao();
+    }
+
+    private long currentUserId() {
+        return SessionManager.getUserId(context);
     }
 
     // ========== Read Operations ==========
@@ -40,7 +45,7 @@ public class PlaceRepository {
      * @return LiveData list of all merchants
      */
     public LiveData<List<Merchant>> getAllPlaces() {
-        return merchantDao.getAll();
+        return merchantDao.getAll(currentUserId());
     }
 
     /**
@@ -51,7 +56,7 @@ public class PlaceRepository {
      * @return List of all merchants
      */
     public List<Merchant> getAllPlacesSync() {
-        return merchantDao.getAllSync();
+        return merchantDao.getAllSync(currentUserId());
     }
 
     /**
@@ -61,7 +66,7 @@ public class PlaceRepository {
      * @return LiveData of merchant
      */
     public LiveData<Merchant> getPlaceById(long placeId) {
-        return merchantDao.getById(placeId);
+        return merchantDao.getById(placeId, currentUserId());
     }
 
     /**
@@ -73,7 +78,7 @@ public class PlaceRepository {
      * @return Merchant or null
      */
     public Merchant getPlaceByIdSync(long placeId) {
-        return merchantDao.getByIdSync(placeId);
+        return merchantDao.getByIdSync(placeId, currentUserId());
     }
 
     /**
@@ -82,7 +87,7 @@ public class PlaceRepository {
      * @return LiveData list of frequent merchants
      */
     public LiveData<List<Merchant>> getFrequentPlaces() {
-        return merchantDao.getFrequentMerchants();
+        return merchantDao.getFrequentMerchants(currentUserId());
     }
 
     /**
@@ -92,7 +97,7 @@ public class PlaceRepository {
      * @return LiveData list of matching merchants
      */
     public LiveData<List<Merchant>> searchPlaces(String query) {
-        return merchantDao.search(query);
+        return merchantDao.search(currentUserId(), query);
     }
 
     /**
@@ -102,7 +107,7 @@ public class PlaceRepository {
      * @return Merchant or null
      */
     public Merchant getPlaceByName(String name) {
-        return merchantDao.getByName(name);
+        return merchantDao.getByName(name, currentUserId());
     }
 
     /**
@@ -116,7 +121,7 @@ public class PlaceRepository {
      */
     public LiveData<List<Merchant>> getNearbyPlaces(double minLat, double maxLat,
                                                      double minLng, double maxLng) {
-        return merchantDao.getNearby(minLat, maxLat, minLng, maxLng);
+        return merchantDao.getNearby(currentUserId(), minLat, maxLat, minLng, maxLng);
     }
 
     /**
@@ -125,7 +130,7 @@ public class PlaceRepository {
      * @return LiveData list of favorite merchants
      */
     public LiveData<List<Merchant>> getFavoritePlaces() {
-        return merchantDao.getFavorites();
+        return merchantDao.getFavorites(currentUserId());
     }
 
     /**
@@ -135,7 +140,7 @@ public class PlaceRepository {
      * @return LiveData list of most used merchants
      */
     public LiveData<List<Merchant>> getMostUsedPlaces(int limit) {
-        return merchantDao.getMostUsed(limit);
+        return merchantDao.getMostUsed(currentUserId(), limit);
     }
 
     /**
@@ -144,7 +149,7 @@ public class PlaceRepository {
      * @return LiveData of place count
      */
     public LiveData<Integer> getPlaceCount() {
-        return merchantDao.getMerchantCount();
+        return merchantDao.getMerchantCount(currentUserId());
     }
 
     // ========== Write Operations ==========
@@ -161,6 +166,10 @@ public class PlaceRepository {
         FinTrackDatabase.databaseWriteExecutor.execute(() -> {
             if (place.getCreatedAt() == null) {
                 place.setCreatedAt(Instant.now());
+            }
+            // Asegurar user_id
+            if (place.getUserId() == 0) {
+                place.setUserId(currentUserId());
             }
 
             long id = merchantDao.insert(place);
@@ -180,6 +189,9 @@ public class PlaceRepository {
             if (place.getCreatedAt() == null) {
                 place.setCreatedAt(Instant.now());
             }
+            if (place.getUserId() == 0) {
+                place.setUserId(currentUserId());
+            }
 
             long id = merchantDao.insert(place);
 
@@ -197,9 +209,7 @@ public class PlaceRepository {
      * @param place Merchant entity to update
      */
     public void updatePlace(Merchant place) {
-        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
-            merchantDao.update(place);
-        });
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> merchantDao.update(place));
     }
 
     /**
@@ -208,9 +218,7 @@ public class PlaceRepository {
      * @param place Merchant entity to delete
      */
     public void deletePlace(Merchant place) {
-        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
-            merchantDao.delete(place);
-        });
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> merchantDao.delete(place));
     }
 
     /**
@@ -219,9 +227,7 @@ public class PlaceRepository {
      * @param placeId Place ID to delete
      */
     public void deletePlaceById(long placeId) {
-        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
-            merchantDao.deleteById(placeId);
-        });
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> merchantDao.deleteById(placeId));
     }
 
     /**
@@ -231,9 +237,7 @@ public class PlaceRepository {
      * @param isFavorite true to mark as favorite, false otherwise
      */
     public void toggleFavorite(long placeId, boolean isFavorite) {
-        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
-            merchantDao.updateFrequent(placeId, isFavorite);
-        });
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> merchantDao.updateFrequent(placeId, isFavorite));
     }
 
     /**
@@ -244,9 +248,7 @@ public class PlaceRepository {
      * @param longitude Longitude
      */
     public void updateLocation(long placeId, double latitude, double longitude) {
-        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
-            merchantDao.updateLocation(placeId, latitude, longitude);
-        });
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> merchantDao.updateLocation(placeId, latitude, longitude));
     }
 
     /**
@@ -255,9 +257,7 @@ public class PlaceRepository {
      * @param placeId Place ID
      */
     public void incrementUsage(long placeId) {
-        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
-            merchantDao.incrementUsageCount(placeId, Instant.now().toEpochMilli());
-        });
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> merchantDao.incrementUsageCount(placeId, Instant.now().toEpochMilli()));
     }
 
     /**

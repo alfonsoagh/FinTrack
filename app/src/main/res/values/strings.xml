@@ -250,4 +250,6 @@
     <string name="hint_zero">0</string>
     <string name="hacia">Hacia</string>
     <string name="desde">Desde</string>
+    <string name="sin_presupuesto">Sin presupuesto</string>
+    <string name="valor_na">N/A</string>
 </resources>

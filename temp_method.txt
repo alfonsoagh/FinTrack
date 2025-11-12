@@ -1,0 +1,90 @@
+﻿    private void proceedWithSaveTransaction(double amount) {
+        // Obtener nota (opcional)
+        String notes = binding.etNote.getText().toString().trim();
+
+        // Agregar informaciÃ³n de ubicaciÃ³n a las notas si existe
+        if (hasLocation && currentLatitude != null && currentLongitude != null) {
+            String locationInfo = String.format(Locale.US, "\nðŸ“ GPS: %.6f, %.6f",
+                    currentLatitude, currentLongitude);
+            notes = notes.isEmpty() ? locationInfo.trim() : notes + locationInfo;
+        }
+
+        // Obtener categorÃ­a seleccionada del spinner
+        String selectedCategoryName = binding.spinnerCategory.getSelectedItem() != null ?
+                binding.spinnerCategory.getSelectedItem().toString() : null;
+        Long categoryId = null;
+        if (selectedCategoryName != null && categoryNameToIdMap.containsKey(selectedCategoryName)) {
+            categoryId = categoryNameToIdMap.get(selectedCategoryName);
+        }
+
+        // Obtener userId desde sesiÃ³n
+        long userId = SessionManager.getUserId(requireContext());
+        Transaction transaction = new Transaction();
+        transaction.setUserId(userId);
+        transaction.setAmount(amount);
+        transaction.setType(selectedType);
+        transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
+        transaction.setCurrencyCode(userCurrencyCode != null ? userCurrencyCode : "MXN");
+        transaction.setNotes(notes.isEmpty() ? null : notes);
+        transaction.setCategoryId(categoryId); // Asignar categoryId desde spinner
+
+        // Guardar coordenadas GPS si existen (importante para mostrar en el mapa del viaje)
+        if (hasLocation && currentLatitude != null && currentLongitude != null) {
+            transaction.setLatitude(currentLatitude);
+            transaction.setLongitude(currentLongitude);
+        }
+
+        // Convertir LocalDate a Instant para transactionDate
+        Instant transactionDate = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        transaction.setTransactionDate(transactionDate);
+
+        switch (selectedPaymentMethod.getType()) {
+            case CREDIT_CARD:
+                transaction.setCardId(selectedPaymentMethod.getEntityId());
+                transaction.setCardType("CREDIT");
+                break;
+            case DEBIT_CARD:
+                transaction.setCardId(selectedPaymentMethod.getEntityId());
+                transaction.setCardType("DEBIT");
+                // Asociar cuenta de dbito subyacente si es posible
+                DebitCardEntity dc = cardRepository.getDebitCardByIdSync(selectedPaymentMethod.getEntityId());
+                if (dc != null) transaction.setAccountId(dc.getAccountId());
+                break;
+            case CASH:
+                transaction.setCardType("CASH");
+                transaction.setAccountId(getOrCreateCashAccountId());
+                break;
+        }
+
+        // Verificar si hay viaje activo y preguntar solo para gastos
+        if (selectedType == Transaction.TransactionType.EXPENSE) {
+            FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+                try {
+                    var activeTrip = tripRepository.getActiveTripSync(userId);
+                    if (activeTrip != null) {
+                        // Hay viaje activo - preguntar en UI thread
+                        final String tripName = activeTrip.getName();
+                        final long tripId = activeTrip.getTripId();
+
+                        requireActivity().runOnUiThread(() -> {
+                            showTripAssociationDialog(transaction, tripName, tripId);
+                        });
+                    } else {
+                        // No hay viaje activo - guardar directamente
+                        saveTransactionDirectly(transaction, selectedPaymentMethod);
+                    }
+                } catch (Exception e) {
+                    requireActivity().runOnUiThread(() -> {
+                        // Error al verificar viaje - guardar sin viaje
+                        saveTransactionDirectly(transaction, selectedPaymentMethod);
+                    });
+                }
+            });
+        } else {
+            // No es gasto - guardar directamente sin viaje
+            saveTransactionDirectly(transaction, selectedPaymentMethod);
+        }
+    }
+
+    private void showTripAssociationDialog(Transaction transaction, String tripName, long tripId) {
+        new AlertDialog.Builder(requireContext())

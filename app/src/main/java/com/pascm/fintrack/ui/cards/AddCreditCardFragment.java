@@ -322,6 +322,24 @@ public class AddCreditCardFragment extends Fragment {
         } else {
             previewDueDate.setText("Pago: —");
         }
+
+        // Actualizar colores de texto
+        updateTextColors();
+    }
+
+    private void updateTextColors() {
+        int textColor = (selectedGradient == CreditCard.CardGradient.SILVER ||
+                         selectedGradient == CreditCard.CardGradient.GOLD)
+                ? getResources().getColor(android.R.color.black)
+                : getResources().getColor(android.R.color.white);
+
+        previewBankName.setTextColor(textColor);
+        previewCardAlias.setTextColor(textColor);
+        previewBrandText.setTextColor(textColor);
+        previewCardNumber.setTextColor(textColor);
+        previewAvailable.setTextColor(textColor);
+        previewStatementDate.setTextColor(textColor);
+        previewDueDate.setTextColor(textColor);
     }
 
     private void updatePreviewGradient() {
@@ -338,6 +356,9 @@ public class AddCreditCardFragment extends Fragment {
             );
             gradientDrawable.setCornerRadius(16 * getResources().getDisplayMetrics().density);
             previewCardContainer.setBackground(gradientDrawable);
+
+            // Actualizar colores de texto después de cambiar el gradiente
+            updateTextColors();
         } catch (Exception e) {
             e.printStackTrace();
         }

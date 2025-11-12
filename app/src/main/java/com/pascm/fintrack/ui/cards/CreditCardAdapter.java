@@ -82,9 +82,14 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
         private final TextView txtUsageLabel;
         private final TextView txtUsagePercentage;
         private final ImageView imgBrandLogo;
+        private final ImageView imgCardIcon;
         private final ProgressBar progressBar;
         private final TextView txtStatementDate;
         private final TextView txtPaymentDate;
+        private final TextView txtBalanceLabel;
+        private final TextView txtLimitLabel;
+        private final TextView txtStatementLabel;
+        private final TextView txtPaymentLabel;
 
         public CardViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -97,9 +102,14 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
             txtUsageLabel = itemView.findViewById(R.id.txtUsageLabel);
             txtUsagePercentage = itemView.findViewById(R.id.txtUsagePercentage);
             imgBrandLogo = itemView.findViewById(R.id.imgBrandLogo);
+            imgCardIcon = itemView.findViewById(R.id.imgCardIcon);
             progressBar = itemView.findViewById(R.id.progressBar);
             txtStatementDate = itemView.findViewById(R.id.txtStatementDate);
             txtPaymentDate = itemView.findViewById(R.id.txtPaymentDate);
+            txtBalanceLabel = itemView.findViewById(R.id.txtBalanceLabel);
+            txtLimitLabel = itemView.findViewById(R.id.txtLimitLabel);
+            txtStatementLabel = itemView.findViewById(R.id.txtStatementLabel);
+            txtPaymentLabel = itemView.findViewById(R.id.txtPaymentLabel);
         }
 
         public void bind(CreditCardEntity card, OnCardClickListener listener, NumberFormat currencyFormat,
@@ -159,6 +169,28 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
             gradientDrawable.setCornerRadius(24 * itemView.getContext().getResources().getDisplayMetrics().density);
             cardContainer.setBackground(gradientDrawable);
 
+            // Actualizar el color del texto según el gradiente seleccionado
+            int textColor = (gradient == CreditCard.CardGradient.SILVER ||
+                             gradient == CreditCard.CardGradient.GOLD)
+                    ? itemView.getContext().getResources().getColor(android.R.color.black)
+                    : itemView.getContext().getResources().getColor(android.R.color.white);
+
+            txtBankName.setTextColor(textColor);
+            txtCardLabel.setTextColor(textColor);
+            txtCardNumber.setTextColor(textColor);
+            txtBalance.setTextColor(textColor);
+            txtLimit.setTextColor(textColor);
+            txtUsageLabel.setTextColor(textColor);
+            txtUsagePercentage.setTextColor(textColor);
+            txtStatementDate.setTextColor(textColor);
+            txtBalanceLabel.setTextColor(textColor);
+            txtLimitLabel.setTextColor(textColor);
+            txtStatementLabel.setTextColor(textColor);
+            txtPaymentLabel.setTextColor(textColor);
+
+            // Aplicar color al ícono de la tarjeta
+            imgCardIcon.setColorFilter(textColor);
+
             // Configurar el logo de la marca
             int logoRes = "visa".equalsIgnoreCase(card.getBrand())
                     ? R.drawable.ic_visa_logo
@@ -182,11 +214,11 @@ public class CreditCardAdapter extends RecyclerView.Adapter<CreditCardAdapter.Ca
                 if (card.isInPaymentPeriod()) {
                     txtPaymentDate.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.holo_red_light));
                 } else {
-                    txtPaymentDate.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+                    txtPaymentDate.setTextColor(textColor);
                 }
             } else {
                 txtPaymentDate.setText("--");
-                txtPaymentDate.setTextColor(ContextCompat.getColor(itemView.getContext(), android.R.color.white));
+                txtPaymentDate.setTextColor(textColor);
             }
 
             // Click listener

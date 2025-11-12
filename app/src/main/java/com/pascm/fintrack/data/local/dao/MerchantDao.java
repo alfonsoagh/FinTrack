@@ -42,51 +42,49 @@ public interface MerchantDao {
     @Query("DELETE FROM merchants WHERE merchant_id = :merchantId")
     int deleteById(long merchantId);
 
-    // ========== Query Operations ==========
+    // ====== Queries filtradas por usuario ======
 
     /**
      * Get merchant by ID
      */
-    @Query("SELECT * FROM merchants WHERE merchant_id = :merchantId")
-    LiveData<Merchant> getById(long merchantId);
+    @Query("SELECT * FROM merchants WHERE merchant_id = :merchantId AND user_id = :userId")
+    LiveData<Merchant> getById(long merchantId, long userId);
 
-    @Query("SELECT * FROM merchants WHERE merchant_id = :merchantId")
-    Merchant getByIdSync(long merchantId);
+    @Query("SELECT * FROM merchants WHERE merchant_id = :merchantId AND user_id = :userId")
+    Merchant getByIdSync(long merchantId, long userId);
 
     /**
      * Get all merchants, ordered by name
      */
-    @Query("SELECT * FROM merchants ORDER BY name ASC")
-    LiveData<List<Merchant>> getAll();
+    @Query("SELECT * FROM merchants WHERE user_id = :userId ORDER BY name ASC")
+    LiveData<List<Merchant>> getAll(long userId);
 
-    @Query("SELECT * FROM merchants ORDER BY name ASC")
-    List<Merchant> getAllSync();
+    @Query("SELECT * FROM merchants WHERE user_id = :userId ORDER BY name ASC")
+    List<Merchant> getAllSync(long userId);
 
     /**
      * Get frequent merchants (used 5+ times)
      */
-    @Query("SELECT * FROM merchants WHERE is_frequent = 1 ORDER BY name ASC")
-    LiveData<List<Merchant>> getFrequentMerchants();
+    @Query("SELECT * FROM merchants WHERE is_frequent = 1 AND user_id = :userId ORDER BY name ASC")
+    LiveData<List<Merchant>> getFrequentMerchants(long userId);
 
     /**
      * Search merchants by name or address
      */
-    @Query("SELECT * FROM merchants WHERE " +
-           "(name LIKE '%' || :query || '%' OR address LIKE '%' || :query || '%') " +
-           "ORDER BY name ASC")
-    LiveData<List<Merchant>> search(String query);
+    @Query("SELECT * FROM merchants WHERE user_id = :userId AND (name LIKE '%' || :query || '%' OR address LIKE '%' || :query || '%') ORDER BY name ASC")
+    LiveData<List<Merchant>> search(long userId, String query);
 
     /**
      * Get merchant by exact name
      */
-    @Query("SELECT * FROM merchants WHERE LOWER(name) = LOWER(:name) LIMIT 1")
-    Merchant getByName(String name);
+    @Query("SELECT * FROM merchants WHERE LOWER(name) = LOWER(:name) AND user_id = :userId LIMIT 1")
+    Merchant getByName(String name, long userId);
 
     /**
      * Get merchants with a specific tag
      */
-    @Query("SELECT * FROM merchants WHERE tags LIKE '%' || :tag || '%' ORDER BY name ASC")
-    LiveData<List<Merchant>> getByTag(String tag);
+    @Query("SELECT * FROM merchants WHERE user_id = :userId AND tags LIKE '%' || :tag || '%' ORDER BY name ASC")
+    LiveData<List<Merchant>> getByTag(long userId, String tag);
 
     /**
      * Get merchants near a location (simple bounding box)
@@ -96,48 +94,38 @@ public interface MerchantDao {
      * @param minLng Minimum longitude
      * @param maxLng Maximum longitude
      */
-    @Query("SELECT * FROM merchants WHERE " +
-           "latitude BETWEEN :minLat AND :maxLat AND " +
-           "longitude BETWEEN :minLng AND :maxLng " +
-           "ORDER BY name ASC")
-    LiveData<List<Merchant>> getNearby(double minLat, double maxLat, double minLng, double maxLng);
+    @Query("SELECT * FROM merchants WHERE user_id = :userId AND latitude BETWEEN :minLat AND :maxLat AND longitude BETWEEN :minLng AND :maxLng ORDER BY name ASC")
+    LiveData<List<Merchant>> getNearby(long userId, double minLat, double maxLat, double minLng, double maxLng);
 
     /**
      * Get merchants marked as frequent (is_frequent = true)
      */
-    @Query("SELECT * FROM merchants WHERE is_frequent = 1 ORDER BY usage_count DESC")
-    LiveData<List<Merchant>> getFavorites();
+    @Query("SELECT * FROM merchants WHERE is_frequent = 1 AND user_id = :userId ORDER BY usage_count DESC")
+    LiveData<List<Merchant>> getFavorites(long userId);
 
     /**
      * Get most frequently used merchants (by usage count)
      */
-    @Query("SELECT * FROM merchants " +
-           "ORDER BY usage_count DESC " +
-           "LIMIT :limit")
-    LiveData<List<Merchant>> getMostUsed(int limit);
+    @Query("SELECT * FROM merchants WHERE user_id = :userId ORDER BY usage_count DESC LIMIT :limit")
+    LiveData<List<Merchant>> getMostUsed(long userId, int limit);
 
     /**
      * Get recently used merchants (merchants used in last N days)
      */
-    @Query("SELECT DISTINCT m.* " +
-           "FROM merchants m " +
-           "INNER JOIN transactions t ON m.merchant_id = t.merchant_id " +
-           "WHERE t.transaction_date >= :sinceDate " +
-           "ORDER BY m.last_used_at DESC " +
-           "LIMIT :limit")
-    LiveData<List<Merchant>> getRecentlyUsed(long sinceDate, int limit);
+    @Query("SELECT DISTINCT m.* FROM merchants m INNER JOIN transactions t ON m.merchant_id = t.merchant_id WHERE t.transaction_date >= :sinceDate AND m.user_id = :userId ORDER BY m.last_used_at DESC LIMIT :limit")
+    LiveData<List<Merchant>> getRecentlyUsed(long userId, long sinceDate, int limit);
 
     /**
      * Get merchant count
      */
-    @Query("SELECT COUNT(*) FROM merchants")
-    LiveData<Integer> getMerchantCount();
+    @Query("SELECT COUNT(*) FROM merchants WHERE user_id = :userId")
+    LiveData<Integer> getMerchantCount(long userId);
 
     /**
      * Get frequent merchant count
      */
-    @Query("SELECT COUNT(*) FROM merchants WHERE is_frequent = 1")
-    LiveData<Integer> getFrequentMerchantCount();
+    @Query("SELECT COUNT(*) FROM merchants WHERE is_frequent = 1 AND user_id = :userId")
+    LiveData<Integer> getFrequentMerchantCount(long userId);
 
     /**
      * Check if merchant is being used in transactions

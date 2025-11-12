@@ -3,6 +3,7 @@ package com.pascm.fintrack.data.local.entity;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.ForeignKey;
 import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
@@ -12,19 +13,27 @@ import java.util.List;
 
 /**
  * Merchant entity - represents places/merchants where transactions occur.
- *
- * This replaces the concept of "PlacesManager" with actual persistent data.
- * Merchants can have location data and be reused across transactions.
+ * Ahora incluye user_id para separar datos por usuario.
  */
 @Entity(
         tableName = "merchants",
-        indices = @Index("name")
+        foreignKeys = @ForeignKey(
+                entity = User.class,
+                parentColumns = "user_id",
+                childColumns = "user_id",
+                onDelete = ForeignKey.CASCADE
+        ),
+        indices = { @Index("name"), @Index("user_id") }
 )
 public class Merchant {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "merchant_id")
     private long merchantId;
+
+    // Nuevo: ID del usuario dueño
+    @ColumnInfo(name = "user_id")
+    private long userId;
 
     /**
      * Merchant/place name
@@ -137,6 +146,14 @@ public class Merchant {
 
     public void setMerchantId(long merchantId) {
         this.merchantId = merchantId;
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
     }
 
     @NonNull

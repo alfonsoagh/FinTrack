@@ -1,13 +1,18 @@
 package com.pascm.fintrack.ui.viaje;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -37,6 +42,22 @@ public class ModoViajeFragment extends Fragment {
     private TransactionRepository transactionRepository;
     private TripTransactionAdapter transactionAdapter;
     private long userId;
+
+    // Launcher para solicitar permisos de ubicación
+    private final ActivityResultLauncher<String[]> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                Boolean fineGranted = result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false);
+                Boolean coarseGranted = result.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false);
+
+                if (Boolean.TRUE.equals(fineGranted) || Boolean.TRUE.equals(coarseGranted)) {
+                    // Permisos concedidos, navegar al mapa
+                    Navigation.findNavController(requireView()).navigate(R.id.action_modo_viaje_to_tripMap);
+                } else {
+                    Toast.makeText(requireContext(),
+                        "Permiso de ubicación necesario para ver el mapa",
+                        Toast.LENGTH_LONG).show();
+                }
+            });
 
     public ModoViajeFragment() { }
 
@@ -83,10 +104,15 @@ public class ModoViajeFragment extends Fragment {
         // End trip button
         binding.btnEndTrip.setOnClickListener(v -> endTrip());
 
-        // View map button
-        binding.btnViewMap.setOnClickListener(v ->
-                Toast.makeText(requireContext(), "Ver mapa", Toast.LENGTH_SHORT).show()
-        );
+        // View map button -> navegar al fragment de mapa del viaje
+        binding.btnViewMap.setOnClickListener(v -> {
+            // Verificar permisos de ubicación antes de navegar al mapa
+            if (hasLocationPermissions()) {
+                Navigation.findNavController(v).navigate(R.id.action_modo_viaje_to_tripMap);
+            } else {
+                requestLocationPermissions();
+            }
+        });
 
         // Export CSV button
         binding.btnExportCsv.setOnClickListener(v -> exportTripToCsv());
@@ -104,7 +130,6 @@ public class ModoViajeFragment extends Fragment {
                 Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_lugares);
                 return true;
             } else if (itemId == R.id.nav_reportes) {
-                // Navegar a reportes en lugar de mostrar un Toast
                 Navigation.findNavController(view).navigate(R.id.action_modo_viaje_to_reportes);
                 return true;
             } else if (itemId == R.id.nav_perfil) {
@@ -173,11 +198,19 @@ public class ModoViajeFragment extends Fragment {
                         transactions.subList(0, 5) : transactions;
                 transactionAdapter.setTransactions(recentTransactions);
 
-                // Calculate total spent
+                // Calculate totals and top category
                 double spent = 0;
+                int expenseCount = 0;
+                java.util.Map<Long, Integer> categoryCounts = new java.util.HashMap<>();
                 for (Transaction t : transactions) {
-                    if (t.getType() == Transaction.TransactionType.EXPENSE) {
+                    if (t.getType() == Transaction.TransactionType.EXPENSE && t.getAmount() > 0) {
                         spent += t.getAmount();
+                        expenseCount++;
+                        Long catId = t.getCategoryId();
+                        if (catId != null) {
+                            Integer c = categoryCounts.get(catId);
+                            categoryCounts.put(catId, c == null ? 1 : c + 1);
+                        }
                     }
                 }
 
@@ -188,17 +221,49 @@ public class ModoViajeFragment extends Fragment {
                 tripRepository.getActiveTrip(userId).observe(getViewLifecycleOwner(), trip -> {
                     if (trip != null && trip.hasBudget()) {
                         double remaining = trip.getBudgetAmount() - totalSpent;
-                        binding.txtBudgetRemaining.setText(formatCurrency(remaining));
+                        binding.txtBudgetRemaining.setText(formatCurrency(Math.max(0, remaining)));
 
-                        int progress = (int) ((totalSpent / trip.getBudgetAmount()) * 100);
-                        binding.progressBudget.setProgress(Math.min(progress, 100));
+                        int progress = trip.getBudgetAmount() > 0 ? (int) ((totalSpent / trip.getBudgetAmount()) * 100) : 0;
+                        binding.progressBudget.setProgress(Math.min(Math.max(progress, 0), 100));
+                    } else {
+                        binding.txtBudgetRemaining.setText(getString(R.string.valor_na));
+                        binding.progressBudget.setProgress(0);
                     }
                 });
 
-                // Find top category (simple implementation)
-                if (!transactions.isEmpty()) {
-                    binding.txtTopCategory.setText("Gastos");
+                // Top categoría: mostrar nombre si hay al menos un gasto; de lo contrario '---'
+                if (expenseCount == 0 || categoryCounts.isEmpty()) {
+                    binding.txtTopCategory.setText("---");
+                } else {
+                    // encontrar categoría con mayor conteo
+                    Long topCategoryId = null; int max = -1;
+                    for (java.util.Map.Entry<Long, Integer> e : categoryCounts.entrySet()) {
+                        if (e.getValue() > max) { max = e.getValue(); topCategoryId = e.getKey(); }
+                    }
+                    final Long finalTopCategoryId = topCategoryId;
+                    // Obtener nombre de categoría en background
+                    new Thread(() -> {
+                        try {
+                            com.pascm.fintrack.data.local.FinTrackDatabase db = com.pascm.fintrack.data.local.FinTrackDatabase.getDatabase(requireContext());
+                            com.pascm.fintrack.data.local.entity.Category cat = finalTopCategoryId != null ? db.categoryDao().getByIdSync(finalTopCategoryId) : null;
+                            requireActivity().runOnUiThread(() -> {
+                                if (binding != null) {
+                                    binding.txtTopCategory.setText(cat != null ? cat.getName() : "---");
+                                }
+                            });
+                        } catch (Exception ex) {
+                            requireActivity().runOnUiThread(() -> {
+                                if (binding != null) binding.txtTopCategory.setText("---");
+                            });
+                        }
+                    }).start();
                 }
+            } else {
+                // Sin transacciones
+                binding.txtTransactionCount.setText("0");
+                binding.txtTopCategory.setText("---");
+                binding.txtBudgetSpent.setText(formatCurrency(0));
+                binding.progressBudget.setProgress(0);
             }
         });
     }
@@ -243,6 +308,27 @@ public class ModoViajeFragment extends Fragment {
             } else {
                 Toast.makeText(requireContext(), "No hay viaje activo", Toast.LENGTH_SHORT).show();
             }
+        });
+    }
+
+    /**
+     * Verifica si la aplicación tiene permisos de ubicación
+     */
+    private boolean hasLocationPermissions() {
+        boolean fineGranted = ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return fineGranted || coarseGranted;
+    }
+
+    /**
+     * Solicita permisos de ubicación al usuario
+     */
+    private void requestLocationPermissions() {
+        locationPermissionLauncher.launch(new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
         });
     }
 

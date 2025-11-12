@@ -112,7 +112,7 @@ import java.util.concurrent.Executors;
                 // AuditLog.class,
                 // AttachmentLocal.class
         },
-        version = 7,
+        version = 8,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -218,7 +218,7 @@ public abstract class FinTrackDatabase extends RoomDatabase {
                                     "fintrack_database"
                             )
                             // Add migrations when schema changes
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
 
                             // CAUTION: fallbackToDestructiveMigration() will DELETE ALL DATA
                             // Only use during development! Remove for production.
@@ -392,6 +392,20 @@ public abstract class FinTrackDatabase extends RoomDatabase {
                 "CREATE INDEX IF NOT EXISTS `index_notifications_created_at` " +
                 "ON `notifications` (`created_at`)"
             );
+        }
+    };
+
+    /**
+     * Migration from version 7 to 8: Add user_id column to merchants table
+     */
+    static final Migration MIGRATION_7_8 = new Migration(7, 8) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            // Add user_id column to merchants table
+            db.execSQL("ALTER TABLE merchants ADD COLUMN user_id INTEGER NOT NULL DEFAULT 0");
+
+            // Create index for user_id column in merchants table
+            db.execSQL("CREATE INDEX IF NOT EXISTS index_merchants_user_id ON merchants(user_id)");
         }
     };
 

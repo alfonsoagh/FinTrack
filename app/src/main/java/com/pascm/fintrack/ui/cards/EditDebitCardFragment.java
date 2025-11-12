@@ -37,14 +37,13 @@ public class EditDebitCardFragment extends Fragment {
     private DebitCardEntity existingCard;
 
     private TextInputEditText edtBankName, edtCardAlias, edtCardNumber;
-    private TextInputEditText edtCurrentBalance;
     private RadioGroup rgBrand;
 
     // Vista previa
     private View previewCardMaterial;
     private ConstraintLayout previewCardContainer;
     private TextView previewBankName, previewCardAlias, previewBrandText;
-    private TextView previewCardNumber, previewBalance;
+    private TextView previewCardNumber, previewBalance, previewBalanceLabel;
 
     private CreditCard.CardGradient selectedGradient = CreditCard.CardGradient.VIOLET;
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
@@ -96,7 +95,7 @@ public class EditDebitCardFragment extends Fragment {
                 edtCardNumber.setText("**** **** **** " + card.getPanLast4());
 
                 // Balance will be entered manually by user
-                edtCurrentBalance.setText("");
+                // edtCurrentBalance.setText("");
 
                 // Set brand radio button
                 String brand = card.getBrand() != null ? card.getBrand().toLowerCase() : "visa";
@@ -135,7 +134,6 @@ public class EditDebitCardFragment extends Fragment {
         edtBankName = view.findViewById(R.id.edtBankName);
         edtCardAlias = view.findViewById(R.id.edtCardAlias);
         edtCardNumber = view.findViewById(R.id.edtCardNumber);
-        edtCurrentBalance = view.findViewById(R.id.edtCurrentBalance);
         rgBrand = view.findViewById(R.id.rgBrand);
 
         // Preview views
@@ -147,6 +145,7 @@ public class EditDebitCardFragment extends Fragment {
         previewBrandText = previewCard.findViewById(R.id.previewBrandText);
         previewCardNumber = previewCard.findViewById(R.id.previewCardNumber);
         previewBalance = previewCard.findViewById(R.id.previewBalance);
+        previewBalanceLabel = previewCard.findViewById(R.id.previewBalanceLabel);
 
         // Buttons
         view.findViewById(R.id.btnBack).setOnClickListener(v ->
@@ -173,7 +172,7 @@ public class EditDebitCardFragment extends Fragment {
 
         edtBankName.addTextChangedListener(previewUpdater);
         edtCardAlias.addTextChangedListener(previewUpdater);
-        edtCurrentBalance.addTextChangedListener(previewUpdater);
+        // edtCurrentBalance.addTextChangedListener(previewUpdater);
     }
 
     private void setupGradientSelector(View view) {
@@ -221,12 +220,25 @@ public class EditDebitCardFragment extends Fragment {
             previewCardNumber.setText("•••• •••• •••• " + existingCard.getPanLast4());
         }
 
-        try {
-            double balance = edtCurrentBalance != null && edtCurrentBalance.getText() != null
-                    ? Double.parseDouble(edtCurrentBalance.getText().toString().replaceAll("[^0-9.]", "")) : 0;
-            previewBalance.setText(currencyFormat.format(balance));
-        } catch (NumberFormatException e) {
-            previewBalance.setText("—");
+        previewBalance.setText("—");
+
+        // Actualizar el color del texto según el gradiente seleccionado
+        updateTextColors();
+    }
+
+    private void updateTextColors() {
+        int textColor = (selectedGradient == CreditCard.CardGradient.SILVER ||
+                         selectedGradient == CreditCard.CardGradient.GOLD)
+                ? getResources().getColor(android.R.color.black)
+                : getResources().getColor(android.R.color.white);
+
+        previewBankName.setTextColor(textColor);
+        previewCardAlias.setTextColor(textColor);
+        previewBrandText.setTextColor(textColor);
+        previewCardNumber.setTextColor(textColor);
+        previewBalance.setTextColor(textColor);
+        if (previewBalanceLabel != null) {
+            previewBalanceLabel.setTextColor(textColor);
         }
     }
 
@@ -244,6 +256,9 @@ public class EditDebitCardFragment extends Fragment {
             );
             gradientDrawable.setCornerRadius(16 * getResources().getDisplayMetrics().density);
             previewCardContainer.setBackground(gradientDrawable);
+
+            // Actualizar colores de texto después de cambiar el gradiente
+            updateTextColors();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -268,9 +283,9 @@ public class EditDebitCardFragment extends Fragment {
         // Parsear balance
         double currentBalance = 0;
         try {
-            if (edtCurrentBalance.getText() != null && !edtCurrentBalance.getText().toString().trim().isEmpty()) {
-                currentBalance = Double.parseDouble(edtCurrentBalance.getText().toString().replaceAll("[^0-9.]", ""));
-            }
+            // if (edtCurrentBalance.getText() != null && !edtCurrentBalance.getText().toString().trim().isEmpty()) {
+            //     currentBalance = Double.parseDouble(edtCurrentBalance.getText().toString().replaceAll("[^0-9.]", ""));
+            // }
         } catch (NumberFormatException e) {
             Toast.makeText(requireContext(), "Verifica el saldo ingresado", Toast.LENGTH_SHORT).show();
             return;
@@ -280,8 +295,6 @@ public class EditDebitCardFragment extends Fragment {
         existingCard.setIssuer(bankName);
         existingCard.setLabel(alias.isEmpty() ? "Débito" : alias);
         existingCard.setGradient(selectedGradient.name());
-
-        final double finalBalance = currentBalance;
 
         // Actualizar en la base de datos
         cardRepository.updateDebitCard(existingCard);

@@ -216,6 +216,7 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_rounded_input"
                         android:gravity="center"
+                        android:minHeight="72dp"
                         android:orientation="vertical"
                         android:padding="12dp">
 
@@ -245,6 +246,7 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_rounded_input"
                         android:gravity="center"
+                        android:minHeight="72dp"
                         android:orientation="vertical"
                         android:padding="12dp">
 
@@ -273,6 +275,7 @@
                         android:layout_weight="1"
                         android:background="@drawable/bg_rounded_input"
                         android:gravity="center"
+                        android:minHeight="72dp"
                         android:orientation="vertical"
                         android:padding="12dp">
 

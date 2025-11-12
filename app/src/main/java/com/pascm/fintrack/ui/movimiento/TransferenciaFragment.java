@@ -14,6 +14,7 @@ import androidx.navigation.Navigation;
 
 import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.FinTrackDatabase;
+import com.pascm.fintrack.data.local.entity.Account;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
 import com.pascm.fintrack.data.local.entity.DebitCardEntity;
 import com.pascm.fintrack.data.local.entity.Transaction;
@@ -312,12 +313,20 @@ public class TransferenciaFragment extends Fragment {
                 }
                 return false;
             case CASH:
-                // Para efectivo siempre permitir por ahora
-                // En el futuro se podría llevar registro de efectivo disponible
-                return true;
+                // Validar saldo de efectivo para cuenta origen
+                long userId = SessionManager.getUserId(requireContext());
+                FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
+                var accounts = db.accountDao().getAllByUserSync(userId);
+                double cashBalance = 0.0;
+                if (accounts != null) {
+                    for (Account acc : accounts) {
+                        if (acc.getType() == Account.AccountType.CASH && !acc.isArchived()) {
+                            cashBalance += acc.getBalance();
+                        }
+                    }
+                }
+                return cashBalance >= amount;
             case CREDIT_CARD:
-                // Las tarjetas de crédito no deberían ser origen para pagos de otras tarjetas
-                // pero si se usa entre cuentas propias, verificar crédito disponible
                 CreditCardEntity creditCard = cardRepository.getCreditCardByIdSync(method.getEntityId());
                 if (creditCard != null) {
                     return creditCard.getAvailableCredit() >= amount;
@@ -326,61 +335,6 @@ public class TransferenciaFragment extends Fragment {
             default:
                 return true;
         }
-    }
-
-    private void proceedWithTransfer(double amount) {
-        // Obtener nota
-        String notes = binding.etNote.getText().toString().trim();
-        String transferNote = notes.isEmpty() ?
-            "Transferencia de " + fromMethod.getDisplayName() + " a " + toMethod.getDisplayName() :
-            notes;
-
-        long userId = SessionManager.getUserId(requireContext());
-        Instant transactionDate = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
-
-        // Ejecutar transferencia
-        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
-            try {
-                // Crear transacción de salida (origen)
-                Transaction outTransaction = createTransaction(
-                        userId,
-                        amount,
-                        Transaction.TransactionType.EXPENSE,
-                        fromMethod,
-                        transactionDate,
-                        transferNote + " [Salida]"
-                );
-
-                // Crear transacción de entrada (destino)
-                Transaction inTransaction = createTransaction(
-                        userId,
-                        amount,
-                        Transaction.TransactionType.INCOME,
-                        toMethod,
-                        transactionDate,
-                        transferNote + " [Entrada]"
-                );
-
-                // Guardar ambas transacciones
-                transactionRepository.insertTransaction(outTransaction);
-                transactionRepository.insertTransaction(inTransaction);
-
-                // Actualizar saldos
-                updateBalanceForTransfer(fromMethod, -amount); // Resta del origen
-                updateBalanceForTransfer(toMethod, amount);    // Suma al destino
-
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(),
-                        "Transferencia realizada: " + fromMethod.getDisplayName() + " → " + toMethod.getDisplayName(),
-                        Toast.LENGTH_LONG).show();
-                    Navigation.findNavController(requireView()).navigateUp();
-                });
-            } catch (Exception e) {
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(), "Error en transferencia: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
-            }
-        });
     }
 
     private Transaction createTransaction(long userId, double amount, Transaction.TransactionType type,
@@ -394,7 +348,7 @@ public class TransferenciaFragment extends Fragment {
         transaction.setNotes(notes);
         transaction.setTransactionDate(date);
 
-        // Asociar método de pago
+        // Asociar método de pago y, si aplica, la cuenta subyacente
         switch (method.getType()) {
             case CREDIT_CARD:
                 transaction.setCardId(method.getEntityId());
@@ -403,9 +357,12 @@ public class TransferenciaFragment extends Fragment {
             case DEBIT_CARD:
                 transaction.setCardId(method.getEntityId());
                 transaction.setCardType("DEBIT");
+                DebitCardEntity dc = cardRepository.getDebitCardByIdSync(method.getEntityId());
+                if (dc != null) transaction.setAccountId(dc.getAccountId());
                 break;
             case CASH:
                 transaction.setCardType("CASH");
+                transaction.setAccountId(getOrCreateCashAccountId());
                 break;
         }
 
@@ -421,20 +378,99 @@ public class TransferenciaFragment extends Fragment {
                 updateDebitCardBalance(method.getEntityId(), amount);
                 break;
             case CASH:
-                // No se actualiza efectivo por ahora
+                updateCashAccountBalance(amount);
                 break;
         }
+    }
+
+    private long getOrCreateCashAccountId() {
+        long userId = SessionManager.getUserId(requireContext());
+        FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
+        var accountDao = db.accountDao();
+        var accounts = accountDao.getAllByUserSync(userId);
+        if (accounts != null) {
+            for (Account acc : accounts) {
+                if (acc.getType() == Account.AccountType.CASH && !acc.isArchived()) {
+                    return acc.getAccountId();
+                }
+            }
+        }
+        // Crear si no existe
+        Account cash = new Account();
+        cash.setUserId(userId);
+        cash.setName("Efectivo");
+        cash.setType(Account.AccountType.CASH);
+        cash.setCurrencyCode("MXN");
+        long id = accountDao.insert(cash);
+        return id;
+    }
+
+    private void updateCashAccountBalance(double delta) {
+        long userId = SessionManager.getUserId(requireContext());
+        FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
+        var accountDao = db.accountDao();
+        var accounts = accountDao.getAllByUserSync(userId);
+        Account cash = null;
+        if (accounts != null) {
+            for (Account acc : accounts) {
+                if (acc.getType() == Account.AccountType.CASH && !acc.isArchived()) {
+                    cash = acc;
+                    break;
+                }
+            }
+        }
+        if (cash == null) {
+            cash = new Account();
+            cash.setUserId(userId);
+            cash.setName("Efectivo");
+            cash.setType(Account.AccountType.CASH);
+            cash.setCurrencyCode("MXN");
+            cash.setBalance(0.0);
+            long id = accountDao.insert(cash);
+            cash.setAccountId(id);
+        }
+        double newBalance = Math.max(0, cash.getBalance() + delta);
+        accountDao.updateBalance(cash.getAccountId(), newBalance, java.time.Instant.now().toEpochMilli());
+    }
+
+    private void proceedWithTransfer(double amount) {
+        String notes = binding.etNote.getText().toString().trim();
+        String baseNote = notes.isEmpty() ? "Transferencia de " + fromMethod.getDisplayName() + " a " + toMethod.getDisplayName() : notes;
+
+        long userId = SessionManager.getUserId(requireContext());
+        Instant date = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+        // Crear transacciones (salida y entrada)
+        Transaction outTx = createTransaction(userId, amount, Transaction.TransactionType.EXPENSE, fromMethod, date, baseNote + " [Salida]");
+        Transaction inTx = createTransaction(userId, amount, Transaction.TransactionType.INCOME, toMethod, date, baseNote + " [Entrada]");
+
+        FinTrackDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                transactionRepository.insertTransaction(outTx);
+                transactionRepository.insertTransaction(inTx);
+
+                // Actualizar saldos (origen negativo, destino positivo)
+                updateBalanceForTransfer(fromMethod, -amount);
+                updateBalanceForTransfer(toMethod, amount);
+
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Transferencia realizada", Toast.LENGTH_LONG).show();
+                    Navigation.findNavController(requireView()).navigateUp();
+                });
+            } catch (Exception e) {
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "Error al transferir: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                );
+            }
+        });
     }
 
     private void updateCreditCardBalance(long cardId, double amount) {
         CreditCardEntity card = cardRepository.getCreditCardByIdSync(cardId);
         if (card != null) {
-            // amount negativo = sale dinero = aumenta deuda
-            // amount positivo = entra dinero = disminuye deuda
-            double newBalance = card.getCurrentBalance() - amount;
+            double newBalance = card.getCurrentBalance() - amount; // amount positivo reduce deuda; negativo aumenta deuda
             newBalance = Math.max(0, newBalance);
             newBalance = Math.min(card.getCreditLimit(), newBalance);
-
             cardRepository.updateCardBalance(cardId, newBalance);
         }
     }
@@ -443,14 +479,11 @@ public class TransferenciaFragment extends Fragment {
         DebitCardEntity card = cardRepository.getDebitCardByIdSync(cardId);
         if (card != null) {
             long accountId = card.getAccountId();
-
             FinTrackDatabase db = FinTrackDatabase.getDatabase(requireContext());
             var account = db.accountDao().getByIdSync(accountId);
-
             if (account != null) {
-                double newBalance = account.getBalance() + amount;
+                double newBalance = account.getBalance() + amount; // amount negativo resta, positivo suma
                 newBalance = Math.max(0, newBalance);
-
                 db.accountDao().updateBalance(accountId, newBalance, Instant.now().toEpochMilli());
             }
         }
