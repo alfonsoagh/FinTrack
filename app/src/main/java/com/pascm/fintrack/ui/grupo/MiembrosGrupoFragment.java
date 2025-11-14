@@ -20,6 +20,7 @@ import com.pascm.fintrack.R;
 import com.pascm.fintrack.data.local.entity.GroupEntity;
 import com.pascm.fintrack.data.local.entity.GroupMemberEntity;
 import com.pascm.fintrack.data.repository.GroupRepository;
+import com.pascm.fintrack.data.repository.TransactionRepository;
 import com.pascm.fintrack.data.repository.UserRepository;
 import com.pascm.fintrack.util.SessionManager;
 
@@ -35,6 +36,7 @@ public class MiembrosGrupoFragment extends Fragment {
     private GroupMembersAdapter adapter;
     private GroupRepository groupRepository;
     private UserRepository userRepository;
+    private TransactionRepository transactionRepository;
     private long userId;
     private long groupId;
     private boolean isCurrentUserAdmin = false;
@@ -52,6 +54,7 @@ public class MiembrosGrupoFragment extends Fragment {
         // Initialize repositories
         groupRepository = new GroupRepository(requireContext());
         userRepository = new UserRepository(requireContext());
+        transactionRepository = new TransactionRepository(requireContext());
         userId = SessionManager.getUserId(requireContext());
 
         // Get group ID from arguments
@@ -88,11 +91,27 @@ public class MiembrosGrupoFragment extends Fragment {
 
         // Botón invitar miembros (solo admin)
         btnInvitarMiembros.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Funcionalidad de invitar miembros próximamente", Toast.LENGTH_SHORT).show();
+            groupRepository.getGroupById(groupId).observe(getViewLifecycleOwner(), group -> {
+                if (group != null) {
+                    InvitarMiembrosDialogFragment dialog =
+                            InvitarMiembrosDialogFragment.newInstance(groupId, group.getGroupName());
+                    dialog.show(getChildFragmentManager(), "InvitarMiembrosDialog");
+                }
+            });
         });
 
-        // Listener para eliminar miembros
-        adapter.setOnMemberActionListener(member -> showDeleteMemberDialog(member));
+        // Listener para eliminar miembros y ver detalle
+        adapter.setOnMemberActionListener(new GroupMembersAdapter.OnMemberActionListener() {
+            @Override
+            public void onDeleteMember(GroupMemberWithStats member) {
+                showDeleteMemberDialog(member);
+            }
+
+            @Override
+            public void onMemberClick(GroupMemberWithStats member) {
+                navigateToMemberDetail(member);
+            }
+        });
     }
 
     private void loadUserGroup() {
@@ -141,14 +160,62 @@ public class MiembrosGrupoFragment extends Fragment {
                                 profile.getFullName() : user.getEmail());
                         memberStats.setUserEmail(user.getEmail());
                         memberStats.setAdmin(member.isAdmin());
-                        memberStats.setTotalExpenses(0.0); // TODO: Calculate from transactions
-                        memberStats.setTransactionCount(0); // TODO: Calculate from transactions
+                        memberStats.setPhotoUrl(profile != null ? profile.getAvatarUrl() : null);
 
-                        membersWithStats.add(memberStats);
-                        adapter.setMembers(new ArrayList<>(membersWithStats));
+                        // Load real statistics from transactions
+                        loadMemberStatistics(memberStats, user.getUserId(), membersWithStats);
                     });
                 }
             });
+        }
+    }
+
+    private void loadMemberStatistics(GroupMemberWithStats memberStats, long memberId, List<GroupMemberWithStats> membersWithStats) {
+        // Track how many stats have been loaded (need 3: income, expenses, count)
+        final int[] statsLoaded = {0};
+        final int TOTAL_STATS = 3;
+
+        // Load total income
+        transactionRepository.getTotalIncome(memberId).observe(getViewLifecycleOwner(), income -> {
+            memberStats.setTotalIncome(income != null ? income : 0.0);
+            statsLoaded[0]++;
+            if (statsLoaded[0] == TOTAL_STATS) {
+                addMemberToList(memberStats, membersWithStats);
+            }
+        });
+
+        // Load total expenses
+        transactionRepository.getTotalExpenses(memberId).observe(getViewLifecycleOwner(), expenses -> {
+            memberStats.setTotalExpenses(expenses != null ? expenses : 0.0);
+            statsLoaded[0]++;
+            if (statsLoaded[0] == TOTAL_STATS) {
+                addMemberToList(memberStats, membersWithStats);
+            }
+        });
+
+        // Load transaction count
+        transactionRepository.getTransactionCount(memberId).observe(getViewLifecycleOwner(), count -> {
+            memberStats.setTransactionCount(count != null ? count : 0);
+            statsLoaded[0]++;
+            if (statsLoaded[0] == TOTAL_STATS) {
+                addMemberToList(memberStats, membersWithStats);
+            }
+        });
+    }
+
+    private void addMemberToList(GroupMemberWithStats memberStats, List<GroupMemberWithStats> membersWithStats) {
+        // Check if member already exists in list (to avoid duplicates)
+        boolean exists = false;
+        for (GroupMemberWithStats existing : membersWithStats) {
+            if (existing.getUserId() == memberStats.getUserId()) {
+                exists = true;
+                break;
+            }
+        }
+
+        if (!exists) {
+            membersWithStats.add(memberStats);
+            adapter.setMembers(new ArrayList<>(membersWithStats));
         }
     }
 
@@ -161,8 +228,26 @@ public class MiembrosGrupoFragment extends Fragment {
 
         // Update adapter with admin status
         adapter = new GroupMembersAdapter(isCurrentUserAdmin);
-        adapter.setOnMemberActionListener(member -> showDeleteMemberDialog(member));
+        adapter.setOnMemberActionListener(new GroupMembersAdapter.OnMemberActionListener() {
+            @Override
+            public void onDeleteMember(GroupMemberWithStats member) {
+                showDeleteMemberDialog(member);
+            }
+
+            @Override
+            public void onMemberClick(GroupMemberWithStats member) {
+                navigateToMemberDetail(member);
+            }
+        });
         rvMiembros.setAdapter(adapter);
+    }
+
+    private void navigateToMemberDetail(GroupMemberWithStats member) {
+        Bundle bundle = new Bundle();
+        bundle.putLong("userId", member.getUserId());
+        bundle.putLong("groupId", groupId);
+        Navigation.findNavController(requireView())
+                .navigate(R.id.action_miembros_to_detalle_miembro, bundle);
     }
 
     private void showDeleteMemberDialog(GroupMemberWithStats member) {

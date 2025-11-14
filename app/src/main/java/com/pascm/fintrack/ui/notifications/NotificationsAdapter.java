@@ -26,12 +26,19 @@ public class NotificationsAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     private static final int VIEW_TYPE_HEADER = 0;
     private static final int VIEW_TYPE_NOTIFICATION = 1;
+    private static final int VIEW_TYPE_GROUP_INVITATION = 2;
 
     private final List<Object> items; // Can be String (date header) or NotificationEntity
     private OnNotificationClickListener listener;
+    private OnInvitationActionListener invitationListener;
 
     public interface OnNotificationClickListener {
         void onNotificationClick(NotificationEntity notification);
+    }
+
+    public interface OnInvitationActionListener {
+        void onAcceptInvitation(NotificationEntity notification);
+        void onRejectInvitation(NotificationEntity notification);
     }
 
     public NotificationsAdapter() {
@@ -68,9 +75,23 @@ public class NotificationsAdapter extends RecyclerView.Adapter<RecyclerView.View
         this.listener = listener;
     }
 
+    public void setOnInvitationActionListener(OnInvitationActionListener listener) {
+        this.invitationListener = listener;
+    }
+
     @Override
     public int getItemViewType(int position) {
-        return items.get(position) instanceof String ? VIEW_TYPE_HEADER : VIEW_TYPE_NOTIFICATION;
+        Object item = items.get(position);
+        if (item instanceof String) {
+            return VIEW_TYPE_HEADER;
+        } else if (item instanceof NotificationEntity) {
+            NotificationEntity notification = (NotificationEntity) item;
+            if ("GROUP_INVITATION".equals(notification.getType())) {
+                return VIEW_TYPE_GROUP_INVITATION;
+            }
+            return VIEW_TYPE_NOTIFICATION;
+        }
+        return VIEW_TYPE_NOTIFICATION;
     }
 
     @NonNull
@@ -80,6 +101,10 @@ public class NotificationsAdapter extends RecyclerView.Adapter<RecyclerView.View
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_notification_date_header, parent, false);
             return new HeaderViewHolder(view);
+        } else if (viewType == VIEW_TYPE_GROUP_INVITATION) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_notification_group_invitation, parent, false);
+            return new GroupInvitationViewHolder(view);
         } else {
             View view = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_notification, parent, false);
@@ -92,6 +117,9 @@ public class NotificationsAdapter extends RecyclerView.Adapter<RecyclerView.View
         if (holder instanceof HeaderViewHolder) {
             String date = (String) items.get(position);
             ((HeaderViewHolder) holder).bind(date);
+        } else if (holder instanceof GroupInvitationViewHolder) {
+            NotificationEntity notification = (NotificationEntity) items.get(position);
+            ((GroupInvitationViewHolder) holder).bind(notification, invitationListener);
         } else if (holder instanceof NotificationViewHolder) {
             NotificationEntity notification = (NotificationEntity) items.get(position);
             ((NotificationViewHolder) holder).bind(notification, listener);
@@ -190,6 +218,58 @@ public class NotificationsAdapter extends RecyclerView.Adapter<RecyclerView.View
                 default:
                     return R.drawable.ic_notifications;
             }
+        }
+    }
+
+    // Group Invitation ViewHolder
+    static class GroupInvitationViewHolder extends RecyclerView.ViewHolder {
+        private final ImageView imgIcon;
+        private final TextView tvTitle;
+        private final TextView tvMessage;
+        private final TextView tvTime;
+        private final View viewUnreadIndicator;
+        private final com.google.android.material.button.MaterialButton btnAceptar;
+        private final com.google.android.material.button.MaterialButton btnRechazar;
+
+        public GroupInvitationViewHolder(@NonNull View itemView) {
+            super(itemView);
+            imgIcon = itemView.findViewById(R.id.img_notification_icon);
+            tvTitle = itemView.findViewById(R.id.tv_notification_title);
+            tvMessage = itemView.findViewById(R.id.tv_notification_message);
+            tvTime = itemView.findViewById(R.id.tv_notification_time);
+            viewUnreadIndicator = itemView.findViewById(R.id.view_unread_indicator);
+            btnAceptar = itemView.findViewById(R.id.btn_aceptar);
+            btnRechazar = itemView.findViewById(R.id.btn_rechazar);
+        }
+
+        public void bind(NotificationEntity notification, OnInvitationActionListener listener) {
+            tvTitle.setText(notification.getTitle());
+            tvMessage.setText(notification.getMessage());
+
+            // Format time
+            Instant createdAt = notification.getCreatedAt();
+            LocalTime time = createdAt.atZone(ZoneId.systemDefault()).toLocalTime();
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
+            tvTime.setText(time.format(timeFormatter));
+
+            // Show/hide unread indicator
+            viewUnreadIndicator.setVisibility(notification.isRead() ? View.GONE : View.VISIBLE);
+
+            // Set icon
+            imgIcon.setImageResource(R.drawable.ic_group_add);
+
+            // Button listeners
+            btnAceptar.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onAcceptInvitation(notification);
+                }
+            });
+
+            btnRechazar.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onRejectInvitation(notification);
+                }
+            });
         }
     }
 }

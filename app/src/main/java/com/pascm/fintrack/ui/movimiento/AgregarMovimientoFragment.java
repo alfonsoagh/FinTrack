@@ -32,8 +32,10 @@ import com.pascm.fintrack.data.local.FinTrackDatabase;
 import com.pascm.fintrack.data.local.entity.Account;
 import com.pascm.fintrack.data.local.entity.CreditCardEntity;
 import com.pascm.fintrack.data.local.entity.DebitCardEntity;
+import com.pascm.fintrack.data.local.entity.Merchant;
 import com.pascm.fintrack.data.local.entity.Transaction;
 import com.pascm.fintrack.data.repository.CardRepository;
+import com.pascm.fintrack.data.repository.PlaceRepository;
 import com.pascm.fintrack.data.repository.TransactionRepository;
 import com.pascm.fintrack.data.repository.TripRepository;
 import com.pascm.fintrack.data.repository.UserRepository;
@@ -60,6 +62,7 @@ public class AgregarMovimientoFragment extends Fragment {
     private TripRepository tripRepository;
     private CardRepository cardRepository;
     private UserRepository userRepository;
+    private PlaceRepository placeRepository;
     private FusedLocationProviderClient fusedLocationClient;
 
     private Transaction.TransactionType selectedType = Transaction.TransactionType.EXPENSE;
@@ -82,6 +85,8 @@ public class AgregarMovimientoFragment extends Fragment {
     private Double currentLatitude = null;
     private Double currentLongitude = null;
     private boolean hasLocation = false;
+    private String selectedPlaceName = null; // Nombre del lugar si se seleccionó uno
+    private Long selectedMerchantId = null; // ID del merchant si se seleccionó lugar frecuente
 
     // Activity result launchers
     private ActivityResultLauncher<Intent> takePictureLauncher;
@@ -118,6 +123,7 @@ public class AgregarMovimientoFragment extends Fragment {
         tripRepository = new TripRepository(requireContext());
         cardRepository = new CardRepository(requireContext());
         userRepository = new UserRepository(requireContext());
+        placeRepository = new PlaceRepository(requireContext());
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
         // Obtener moneda por defecto del usuario
@@ -144,13 +150,17 @@ public class AgregarMovimientoFragment extends Fragment {
         // Botón adjuntar foto - ahora funcional
         binding.btnAttachPhoto.setOnClickListener(v -> showPhotoOptions());
 
-        // Botón ubicación GPS - ahora funcional
-        binding.btnAddLocation.setOnClickListener(v -> {
-            if (hasLocation) {
-                showLocationOptions();
-            } else {
-                getCurrentLocationWithPermission();
-            }
+        // Botón ubicación GPS - ahora con opciones mejoradas
+        binding.btnAddLocation.setOnClickListener(v -> showLocationOptionsDialog());
+
+        // Botón para eliminar ubicación
+        binding.btnRemoveLocation.setOnClickListener(v -> {
+            currentLatitude = null;
+            currentLongitude = null;
+            hasLocation = false;
+            selectedPlaceName = null;
+            selectedMerchantId = null;
+            updateLocationIndicator();
         });
     }
 
@@ -166,7 +176,7 @@ public class AgregarMovimientoFragment extends Fragment {
                     if (photoFile != null && photoFile.exists()) {
                         selectedPhotoUri = Uri.fromFile(photoFile);
                         hasPhoto = true;
-                        Toast.makeText(requireContext(), "✓ Foto capturada", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Foto capturada", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -180,7 +190,7 @@ public class AgregarMovimientoFragment extends Fragment {
                     selectedPhotoUri = result.getData().getData();
                     if (selectedPhotoUri != null) {
                         hasPhoto = true;
-                        Toast.makeText(requireContext(), "✓ Foto seleccionada", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "Foto seleccionada", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -248,27 +258,6 @@ public class AgregarMovimientoFragment extends Fragment {
     }
 
     /**
-     * Show location options when location already exists
-     */
-    private void showLocationOptions() {
-        String currentLocation = String.format(Locale.US, "Ubicación actual:\n%.6f, %.6f",
-                currentLatitude, currentLongitude);
-
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Ubicación GPS")
-                .setMessage(currentLocation)
-                .setPositiveButton("Actualizar", (dialog, which) -> getCurrentLocationWithPermission())
-                .setNegativeButton("Eliminar", (dialog, which) -> {
-                    currentLatitude = null;
-                    currentLongitude = null;
-                    hasLocation = false;
-                    Toast.makeText(requireContext(), "Ubicación eliminada", Toast.LENGTH_SHORT).show();
-                })
-                .setNeutralButton("Cancelar", null)
-                .show();
-    }
-
-    /**
      * Get current location with permission check
      */
     private void getCurrentLocationWithPermission() {
@@ -308,11 +297,11 @@ public class AgregarMovimientoFragment extends Fragment {
                         currentLatitude = location.getLatitude();
                         currentLongitude = location.getLongitude();
                         hasLocation = true;
+                        selectedPlaceName = null; // Limpiar nombre de lugar al usar GPS directo
+                        selectedMerchantId = null;
 
-                        Toast.makeText(requireContext(),
-                                String.format(Locale.US, "✓ Ubicación GPS obtenida\n%.6f, %.6f",
-                                        currentLatitude, currentLongitude),
-                                Toast.LENGTH_LONG).show();
+                        updateLocationIndicator();
+                        Toast.makeText(requireContext(), "Ubicación GPS obtenida", Toast.LENGTH_SHORT).show();
                     } else {
                         // Fallback: intentar con último conocido
                         getLastKnownLocation();
@@ -338,11 +327,11 @@ public class AgregarMovimientoFragment extends Fragment {
                         currentLatitude = location.getLatitude();
                         currentLongitude = location.getLongitude();
                         hasLocation = true;
+                        selectedPlaceName = null;
+                        selectedMerchantId = null;
 
-                        Toast.makeText(requireContext(),
-                                String.format(Locale.US, "✓ Ubicación obtenida (última conocida)\n%.6f, %.6f",
-                                        currentLatitude, currentLongitude),
-                                Toast.LENGTH_LONG).show();
+                        updateLocationIndicator();
+                        Toast.makeText(requireContext(), "Ubicación obtenida", Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(requireContext(),
                                 "No se pudo obtener la ubicación. Asegúrate de que el GPS esté activado.",
@@ -1008,7 +997,7 @@ public class AgregarMovimientoFragment extends Fragment {
                 requireActivity().runOnUiThread(() -> {
                     String successMessage = "Transferencia realizada: " + selectedPaymentMethod.getDisplayName() +
                                           " → " + selectedPaymentMethodTo.getDisplayName();
-                    if (hasLocation) successMessage += "\n✓ Ubicación GPS";
+                    if (hasLocation) successMessage += "\nUbicación GPS guardada";
 
                     Toast.makeText(requireContext(), successMessage, Toast.LENGTH_LONG).show();
                     Navigation.findNavController(requireView()).navigateUp();
@@ -1087,12 +1076,18 @@ public class AgregarMovimientoFragment extends Fragment {
                             currentType == Transaction.TransactionType.EXPENSE ? "Gasto" : "Transferencia";
                     String paymentText = paymentMethod.getDisplayName();
                     StringBuilder successMessage = new StringBuilder(typeText + " guardado - " + paymentText);
-                    if (hasPhoto) successMessage.append("\n✓ Foto adjunta");
-                    if (hasLocation && currentType == Transaction.TransactionType.EXPENSE) successMessage.append("\n✓ Ubicación GPS");
-                    if (transaction.getTripId() != null) successMessage.append("\n✓ Asociado al viaje");
+                    if (hasPhoto) successMessage.append("\nFoto adjunta");
+                    if (hasLocation && currentType == Transaction.TransactionType.EXPENSE) successMessage.append("\nUbicación GPS guardada");
+                    if (transaction.getTripId() != null) successMessage.append("\nAsociado al viaje");
 
                     Toast.makeText(requireContext(), successMessage.toString(), Toast.LENGTH_LONG).show();
-                    Navigation.findNavController(requireView()).navigateUp();
+
+                    // Preguntar si desea guardar el lugar como frecuente (solo para gastos con ubicación)
+                    if (currentType == Transaction.TransactionType.EXPENSE && hasLocation) {
+                        askToSavePlaceAsFrequent(transaction);
+                    } else {
+                        Navigation.findNavController(requireView()).navigateUp();
+                    }
                 });
             } catch (Exception e) {
                 requireActivity().runOnUiThread(() ->
@@ -1100,6 +1095,200 @@ public class AgregarMovimientoFragment extends Fragment {
                 );
             }
         });
+    }
+
+    /**
+     * Actualiza el indicador visual de ubicación
+     */
+    private void updateLocationIndicator() {
+        if (hasLocation && currentLatitude != null && currentLongitude != null) {
+            // Mostrar el indicador
+            binding.cardLocationIndicator.setVisibility(View.VISIBLE);
+
+            // Mostrar nombre del lugar si existe
+            if (selectedPlaceName != null && !selectedPlaceName.isEmpty()) {
+                binding.tvLocationName.setVisibility(View.VISIBLE);
+                binding.tvLocationName.setText(selectedPlaceName);
+            } else {
+                binding.tvLocationName.setVisibility(View.GONE);
+            }
+
+            // Mostrar coordenadas
+            binding.tvLocationCoords.setText(
+                    String.format(Locale.US, "%.6f, %.6f", currentLatitude, currentLongitude)
+            );
+        } else {
+            // Ocultar el indicador
+            binding.cardLocationIndicator.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Muestra el diálogo de opciones de ubicación
+     */
+    private void showLocationOptionsDialog() {
+        LocationOptionsDialogFragment dialog = LocationOptionsDialogFragment.newInstance(
+                new LocationOptionsDialogFragment.LocationOptionListener() {
+                    @Override
+                    public void onUseCurrentLocation() {
+                        getCurrentLocationWithPermission();
+                    }
+
+                    @Override
+                    public void onChooseFrequentPlace() {
+                        showFrequentPlacesDialog();
+                    }
+
+                    @Override
+                    public void onRegisterNewPlace() {
+                        showRegisterPlaceDialog();
+                    }
+                }
+        );
+        dialog.show(getChildFragmentManager(), "LocationOptions");
+    }
+
+    /**
+     * Muestra el diálogo para seleccionar un lugar frecuente
+     */
+    private void showFrequentPlacesDialog() {
+        SelectFrequentPlaceDialogFragment dialog = SelectFrequentPlaceDialogFragment.newInstance(
+                place -> {
+                    // Se seleccionó un lugar frecuente
+                    currentLatitude = place.getLatitude();
+                    currentLongitude = place.getLongitude();
+                    hasLocation = true;
+                    selectedPlaceName = place.getName();
+                    selectedMerchantId = place.getMerchantId();
+
+                    // Incrementar contador de uso
+                    placeRepository.incrementUsage(place.getMerchantId());
+
+                    // Actualizar indicador visual
+                    updateLocationIndicator();
+
+                    Toast.makeText(requireContext(), "Lugar seleccionado: " + place.getName(), Toast.LENGTH_SHORT).show();
+                }
+        );
+        dialog.show(getChildFragmentManager(), "SelectPlace");
+    }
+
+    /**
+     * Muestra el diálogo para registrar una nueva ubicación
+     */
+    private void showRegisterPlaceDialog() {
+        RegisterPlaceDialogFragment dialog = RegisterPlaceDialogFragment.newInstance(
+                (place, photoUri) -> {
+                    // Primero verificar si ya existe la ubicación GPS actual
+                    if (currentLatitude == null || currentLongitude == null) {
+                        // Si no hay ubicación, usar la del lugar registrado
+                        currentLatitude = place.getLatitude();
+                        currentLongitude = place.getLongitude();
+                    } else {
+                        // Si ya hay ubicación, actualizar el lugar con ella
+                        place.setLatitude(currentLatitude);
+                        place.setLongitude(currentLongitude);
+                    }
+
+                    hasLocation = true;
+                    selectedPlaceName = place.getName();
+
+                    // Guardar la foto si existe
+                    if (photoUri != null) {
+                        try {
+                            String photoPath = ImageHelper.saveImageToInternalStorage(
+                                    requireContext(),
+                                    photoUri,
+                                    "place_" + System.currentTimeMillis() + ".jpg"
+                            );
+                            place.setPhotoUrl(photoPath);
+                        } catch (Exception e) {
+                            android.util.Log.e("AgregarMovimiento", "Error saving place photo: " + e.getMessage());
+                        }
+                    }
+
+                    // Guardar el lugar en la base de datos
+                    placeRepository.insertPlace(place, id -> {
+                        selectedMerchantId = id;
+                        requireActivity().runOnUiThread(() -> {
+                            updateLocationIndicator();
+                            Toast.makeText(requireContext(), "Lugar registrado: " + place.getName(), Toast.LENGTH_SHORT).show();
+                        });
+                    });
+                },
+                currentLatitude,
+                currentLongitude
+        );
+        dialog.show(getChildFragmentManager(), "RegisterPlace");
+    }
+
+    /**
+     * Pregunta si desea guardar el lugar como frecuente después de registrar el gasto
+     */
+    private void askToSavePlaceAsFrequent(Transaction transaction) {
+        if (!hasLocation || currentLatitude == null || currentLongitude == null) {
+            return; // No hay ubicación, no preguntar
+        }
+
+        if (selectedMerchantId != null) {
+            return; // Ya se seleccionó un lugar guardado, no preguntar
+        }
+
+        // Preguntar si desea guardar este lugar
+        new AlertDialog.Builder(requireContext())
+                .setTitle("¿Guardar lugar?")
+                .setMessage("¿Deseas guardar esta ubicación como un lugar frecuente para futuras transacciones?")
+                .setPositiveButton("Sí, guardar", (dialog, which) -> {
+                    showSavePlaceNameDialog(transaction);
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    // No guardar, solo cerrar
+                    Navigation.findNavController(requireView()).navigateUp();
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    /**
+     * Muestra un diálogo para ingresar el nombre del lugar a guardar
+     */
+    private void showSavePlaceNameDialog(Transaction transaction) {
+        final android.widget.EditText input = new android.widget.EditText(requireContext());
+        input.setHint("Nombre del lugar");
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Nombre del lugar")
+                .setMessage("Ingresa un nombre para este lugar:")
+                .setView(input)
+                .setPositiveButton("Guardar", (dialog, which) -> {
+                    String placeName = input.getText().toString().trim();
+                    if (!placeName.isEmpty()) {
+                        // Crear y guardar el merchant
+                        Merchant merchant = new Merchant();
+                        merchant.setName(placeName);
+                        merchant.setLatitude(currentLatitude);
+                        merchant.setLongitude(currentLongitude);
+                        merchant.setFrequent(true); // Marcarlo como frecuente
+
+                        placeRepository.insertPlace(merchant, id -> {
+                            requireActivity().runOnUiThread(() -> {
+                                Toast.makeText(requireContext(),
+                                        "Lugar guardado: " + placeName,
+                                        Toast.LENGTH_SHORT).show();
+                                Navigation.findNavController(requireView()).navigateUp();
+                            });
+                        });
+                    } else {
+                        Toast.makeText(requireContext(), "No se guardó el lugar", Toast.LENGTH_SHORT).show();
+                        Navigation.findNavController(requireView()).navigateUp();
+                    }
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> {
+                    Navigation.findNavController(requireView()).navigateUp();
+                })
+                .setCancelable(false)
+                .show();
     }
 
     @Override

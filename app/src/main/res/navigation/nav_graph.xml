@@ -75,6 +75,12 @@
         <action
             android:id="@+id/action_home_to_notificaciones"
             app:destination="@id/notificacionesFragment" />
+        <action
+            android:id="@+id/action_home_to_transacciones_list"
+            app:destination="@id/transaccionesListFragment" />
+        <action
+            android:id="@+id/action_home_to_historico_viajes"
+            app:destination="@id/historicoViajesFragment" />
     </fragment>
 
     <fragment
@@ -110,6 +116,9 @@
             app:destination="@id/reportesFragment"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_modo_viaje_to_historico_viajes"
+            app:destination="@id/historicoViajesFragment" />
     </fragment>
 
     <fragment
@@ -180,6 +189,9 @@
             app:destination="@id/perfilFragment"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="false" />
+        <action
+            android:id="@+id/action_reportes_to_transacciones_list"
+            app:destination="@id/transaccionesListFragment" />
     </fragment>
 
     <fragment
@@ -222,6 +234,9 @@
             android:id="@+id/action_lugares_to_agregar_lugar"
             app:destination="@id/agregarLugarFragment" />
         <action
+            android:id="@+id/action_lugares_to_editar_lugar"
+            app:destination="@id/editarLugarFragment" />
+        <action
             android:id="@+id/action_lugares_to_home"
             app:destination="@id/homeFragment"
             app:popUpTo="@id/homeFragment"
@@ -247,6 +262,16 @@
         android:id="@+id/agregarLugarFragment"
         android:name="com.pascm.fintrack.ui.lugar.AgregarLugarFragment"
         android:label="Agregar Lugar" />
+
+    <fragment
+        android:id="@+id/editarLugarFragment"
+        android:name="com.pascm.fintrack.ui.lugar.EditarLugarFragment"
+        android:label="Editar Lugar">
+        <argument
+            android:name="placeId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </fragment>
 
     <fragment
         android:id="@+id/debitCardsFragment"
@@ -310,16 +335,77 @@
         android:label="Crear Grupo">
         <action
             android:id="@+id/action_crearGrupo_to_miembrosGrupo"
-            app:destination="@id/miembrosGrupoFragment" />
+            app:destination="@id/miembrosGrupoFragment"
+            app:popUpTo="@id/perfilFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment
         android:id="@+id/miembrosGrupoFragment"
         android:name="com.pascm.fintrack.ui.grupo.MiembrosGrupoFragment"
-        android:label="Miembros del Grupo" />
+        android:label="Miembros del Grupo">
+        <action
+            android:id="@+id/action_miembros_to_detalle_miembro"
+            app:destination="@id/detalleMiembroFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/detalleMiembroFragment"
+        android:name="com.pascm.fintrack.ui.grupo.DetalleMiembroFragment"
+        android:label="Detalle del Miembro">
+        <argument
+            android:name="userId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+        <argument
+            android:name="groupId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </fragment>
 
     <fragment
         android:id="@+id/notificacionesFragment"
         android:name="com.pascm.fintrack.ui.notifications.NotificationsFragment"
         android:label="Notificaciones" />
+
+    <!-- Transacciones List Fragment -->
+    <fragment
+        android:id="@+id/transaccionesListFragment"
+        android:name="com.pascm.fintrack.ui.transacciones.TransaccionesListFragment"
+        android:label="Transacciones" />
+
+    <!-- Histórico de Viajes Fragment -->
+    <fragment
+        android:id="@+id/historicoViajesFragment"
+        android:name="com.pascm.fintrack.ui.viajes.HistoricoViajesFragment"
+        android:label="Historial de Viajes">
+        <action
+            android:id="@+id/action_historico_viajes_to_detalle_viaje"
+            app:destination="@id/detalleViajeFragment" />
+    </fragment>
+
+    <!-- Detalle Viaje Fragment -->
+    <fragment
+        android:id="@+id/detalleViajeFragment"
+        android:name="com.pascm.fintrack.ui.viajes.DetalleViajeFragment"
+        android:label="Detalle del Viaje">
+        <argument
+            android:name="tripId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+        <action
+            android:id="@+id/action_detalle_viaje_to_trip_map_detail"
+            app:destination="@id/tripMapDetailFragment" />
+    </fragment>
+
+    <!-- Trip Map Detail Fragment -->
+    <fragment
+        android:id="@+id/tripMapDetailFragment"
+        android:name="com.pascm.fintrack.ui.viajes.TripMapDetailFragment"
+        android:label="Mapa del Viaje">
+        <argument
+            android:name="tripId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </fragment>
 </navigation>

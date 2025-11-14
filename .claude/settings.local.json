@@ -20,7 +20,13 @@
       "Bash(.\\gradlew.bat assembleDebug:*)",
       "Bash(gradlew.bat assembleDebug:*)",
       "Bash(cmd /c gradlew.bat assembleDebug)",
-      "Bash(cmd /c \"gradlew.bat assembleDebug\")"
+      "Bash(cmd /c \"gradlew.bat assembleDebug\")",
+      "Bash(cmd /c \"cd /d C:\\Users\\alpon\\Videos\\pr\\FinTrack && gradlew.bat assembleDebug\")",
+      "Bash(cmd /c \"cd /d C:\\Users\\alpon\\Videos\\pr\\FinTrack &amp;&amp; gradlew.bat assembleDebug\")",
+      "Bash(tasklist:*)",
+      "Bash(C:UsersalponVideosprFinTrackgradlew.bat assembleDebug)",
+      "Bash(cmd /c \"gradlew.bat clean assembleDebug\")",
+      "Bash(timeout /t 30)"
     ],
     "deny": [],
     "ask": []

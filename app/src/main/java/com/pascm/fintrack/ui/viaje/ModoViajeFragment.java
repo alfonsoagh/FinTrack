@@ -117,6 +117,11 @@ public class ModoViajeFragment extends Fragment {
         // Export CSV button
         binding.btnExportCsv.setOnClickListener(v -> exportTripToCsv());
 
+        // Historial de viajes button
+        binding.btnHistorialViajes.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_modo_viaje_to_historico_viajes)
+        );
+
         // Bottom navigation
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();

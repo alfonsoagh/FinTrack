@@ -17,7 +17,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pascm.fintrack.R;
+import com.pascm.fintrack.data.local.entity.GroupMemberEntity;
 import com.pascm.fintrack.data.local.entity.NotificationEntity;
+import com.pascm.fintrack.data.repository.GroupRepository;
 import com.pascm.fintrack.data.repository.NotificationRepository;
 import com.pascm.fintrack.util.SessionManager;
 
@@ -28,6 +30,7 @@ public class NotificationsFragment extends Fragment {
     private TextView btnMarkAllRead;
     private NotificationsAdapter adapter;
     private NotificationRepository notificationRepository;
+    private GroupRepository groupRepository;
     private long userId;
 
     @Nullable
@@ -40,8 +43,9 @@ public class NotificationsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize repository
+        // Initialize repositories
         notificationRepository = new NotificationRepository(requireContext());
+        groupRepository = new GroupRepository(requireContext());
         userId = SessionManager.getUserId(requireContext());
 
         initViews(view);
@@ -84,6 +88,19 @@ public class NotificationsFragment extends Fragment {
             // Handle navigation based on notification type
             handleNotificationAction(notification);
         });
+
+        // Invitation action listener
+        adapter.setOnInvitationActionListener(new NotificationsAdapter.OnInvitationActionListener() {
+            @Override
+            public void onAcceptInvitation(NotificationEntity notification) {
+                handleAcceptInvitation(notification);
+            }
+
+            @Override
+            public void onRejectInvitation(NotificationEntity notification) {
+                handleRejectInvitation(notification);
+            }
+        });
     }
 
     private void loadNotifications() {
@@ -101,36 +118,55 @@ public class NotificationsFragment extends Fragment {
 
     private void handleNotificationAction(NotificationEntity notification) {
         String type = notification.getType();
-
-        if (type == null) {
-            return;
-        }
-
-        // Navigate based on notification type
+        if (type == null) return;
         switch (type) {
             case "EXPENSE":
-                // Navigate to transactions or expense detail
                 Toast.makeText(requireContext(), "Ver detalle de gasto", Toast.LENGTH_SHORT).show();
                 break;
-
             case "CARD":
-                // Navigate to cards screen
                 Toast.makeText(requireContext(), "Ver tarjetas", Toast.LENGTH_SHORT).show();
                 break;
-
             case "GROUP":
-                // Navigate to group members
                 Toast.makeText(requireContext(), "Ver grupo", Toast.LENGTH_SHORT).show();
                 break;
-
             case "TRIP":
-                // Navigate to trips
                 Toast.makeText(requireContext(), "Ver viaje", Toast.LENGTH_SHORT).show();
                 break;
-
+            case "GROUP_INVITATION":
+                // Invitation notifications are handled via accept/reject buttons, no direct navigation.
+                break;
             default:
-                // Generic notification, just mark as read
                 break;
         }
+    }
+
+    private void handleAcceptInvitation(NotificationEntity notification) {
+        // Asegurar que sea realmente una invitación
+        if (!"GROUP_INVITATION".equals(notification.getType())) {
+            Toast.makeText(requireContext(), "Tipo de notificación inválido para esta acción", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Long groupId = notification.getRelatedId();
+        if (groupId == null) {
+            Toast.makeText(requireContext(), "Invitación sin grupo asociado", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        GroupMemberEntity newMember = new GroupMemberEntity();
+        newMember.setGroupId(groupId);
+        newMember.setUserId(userId);
+        newMember.setAdmin(false);
+        // No existe campo 'active' en GroupMemberEntity; se asume activo al crear.
+        groupRepository.addMember(newMember);
+        notificationRepository.deleteNotification(notification);
+        Toast.makeText(requireContext(), "¡Te has unido al grupo exitosamente!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void handleRejectInvitation(NotificationEntity notification) {
+        if (!"GROUP_INVITATION".equals(notification.getType())) {
+            Toast.makeText(requireContext(), "Tipo de notificación inválido para esta acción", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        notificationRepository.deleteNotification(notification);
+        Toast.makeText(requireContext(), "Invitación rechazada", Toast.LENGTH_SHORT).show();
     }
 }

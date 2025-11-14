@@ -54,28 +54,12 @@ public class LugaresFragment extends Fragment {
         binding.rvPlaces.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.rvPlaces.setAdapter(placeAdapter);
 
-        placeAdapter.setOnPlaceActionListener(new PlaceAdapter.OnPlaceActionListener() {
-            @Override
-            public void onPlaceClick(Merchant place) {
-                // Mostrar detalles del lugar
-                String message = place.getName();
-                if (place.hasLocation()) {
-                    message += String.format("\nUbicación: %.6f, %.6f",
-                            place.getLatitude(), place.getLongitude());
-                }
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onEditClick(Merchant place) {
-                // TODO: Navegar a pantalla de edición
-                Toast.makeText(requireContext(), "Editar: " + place.getName(), Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onDeleteClick(Merchant place) {
-                deletePlace(place);
-            }
+        placeAdapter.setOnPlaceActionListener(place -> {
+            // Al hacer click en la card, navegar a pantalla de edición
+            Bundle bundle = new Bundle();
+            bundle.putLong("placeId", place.getMerchantId());
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.action_lugares_to_editar_lugar, bundle);
         });
     }
 

@@ -33,9 +33,14 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <View
+            <ImageButton
+                android:id="@+id/btnHistorialViajes"
                 android:layout_width="24dp"
-                android:layout_height="24dp" />
+                android:layout_height="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Historial de viajes"
+                android:src="@drawable/ic_bar_chart"
+                app:tint="?attr/colorOnSurface" />
         </LinearLayout>
 
         <!-- Main Content Container -->

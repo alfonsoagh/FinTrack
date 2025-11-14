@@ -41,6 +41,11 @@ public class NotificationRepository {
         });
     }
 
+    // Convenience alias: insert (matches some fragment calls)
+    public void insert(NotificationEntity notification) {
+        createNotification(notification);
+    }
+
     // Mark a notification as read
     public void markAsRead(long notificationId) {
         FinTrackDatabase.databaseWriteExecutor.execute(() -> {
@@ -55,11 +60,17 @@ public class NotificationRepository {
         });
     }
 
-    // Delete a notification
+    // Delete a notification by id
     public void deleteNotification(long notificationId) {
         FinTrackDatabase.databaseWriteExecutor.execute(() -> {
             notificationDao.deleteNotification(notificationId);
         });
+    }
+
+    // Convenience overload: delete by entity
+    public void deleteNotification(NotificationEntity notification) {
+        if (notification == null) return;
+        deleteNotification(notification.getNotificationId());
     }
 
     // Delete all notifications for a user

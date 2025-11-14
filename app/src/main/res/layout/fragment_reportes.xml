@@ -41,6 +41,16 @@
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="20sp"
                     android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/btnHistorialTransacciones"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_alignParentEnd="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Historial de transacciones"
+                    android:src="@drawable/ic_bar_chart"
+                    app:tint="?attr/colorOnSurface" />
             </RelativeLayout>
 
             <!-- Filter Period Display -->

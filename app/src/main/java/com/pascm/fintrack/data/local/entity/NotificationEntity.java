@@ -25,6 +25,16 @@ import java.time.Instant;
 )
 public class NotificationEntity {
 
+    // Enum de tipos para uso tipado en código. Se almacena como String en la DB.
+    public enum NotificationType {
+        GROUP_INVITATION,
+        EXPENSE,
+        CARD,
+        GROUP,
+        TRIP,
+        GENERAL
+    }
+
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "notification_id")
     private long notificationId;
@@ -39,7 +49,7 @@ public class NotificationEntity {
     private String message;
 
     @ColumnInfo(name = "type")
-    private String type; // EXPENSE, CARD, GROUP, TRIP, GENERAL
+    private String type; // Stored as String for Room, use enum helpers
 
     @ColumnInfo(name = "created_at")
     private Instant createdAt;
@@ -48,7 +58,7 @@ public class NotificationEntity {
     private boolean isRead;
 
     @ColumnInfo(name = "related_entity_id")
-    private Long relatedEntityId; // Optional: ID of related transaction, card, etc.
+    private Long relatedEntityId; // Optional: ID of related transaction, card, group, etc.
 
     // Constructors
     public NotificationEntity() {
@@ -93,8 +103,23 @@ public class NotificationEntity {
         return type;
     }
 
+    // Devuelve el tipo como enum si coincide, sino null.
+    public NotificationType getTypeEnum() {
+        if (type == null) return null;
+        try {
+            return NotificationType.valueOf(type);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
     public void setType(String type) {
         this.type = type;
+    }
+
+    // Sobrecarga para usar enum directamente.
+    public void setType(NotificationType type) {
+        this.type = type != null ? type.name() : null;
     }
 
     public Instant getCreatedAt() {
@@ -119,5 +144,14 @@ public class NotificationEntity {
 
     public void setRelatedEntityId(Long relatedEntityId) {
         this.relatedEntityId = relatedEntityId;
+    }
+
+    // Métodos wrapper para compatibilidad con código existente.
+    public Long getRelatedId() {
+        return relatedEntityId;
+    }
+
+    public void setRelatedId(Long id) {
+        this.relatedEntityId = id;
     }
 }

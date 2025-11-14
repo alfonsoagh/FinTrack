@@ -102,6 +102,9 @@ public class ReportesFragment extends Fragment {
         binding.btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         binding.btnFilters.setOnClickListener(v -> showFilterDialog());
         binding.btnExportCsv.setOnClickListener(v -> exportReportToCsv());
+        binding.btnHistorialTransacciones.setOnClickListener(v ->
+                Navigation.findNavController(v).navigate(R.id.action_reportes_to_transacciones_list)
+        );
     }
 
     private void showFilterDialog() {

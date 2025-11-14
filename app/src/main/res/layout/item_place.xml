@@ -116,41 +116,5 @@
             app:drawableStartCompat="@drawable/ic_check"
             app:drawableTint="@color/on_surface_variant"
             tools:text="Usado 5 veces" />
-
-        <!-- Botones de acción -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btn_edit_place"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/surface_variant"
-                android:text="Editar"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:cornerRadius="8dp"
-                tools:ignore="HardcodedText" />
-
-            <Button
-                android:id="@+id/btn_delete_place"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:backgroundTint="#FFEBEE"
-                android:text="Eliminar"
-                android:textColor="#C62828"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:cornerRadius="8dp"
-                tools:ignore="HardcodedText" />
-        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

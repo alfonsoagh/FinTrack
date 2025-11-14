@@ -11,6 +11,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.pascm.fintrack.R;
+import com.pascm.fintrack.util.ImageHelper;
+
+import android.graphics.Bitmap;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -26,6 +29,7 @@ public class GroupMembersAdapter extends RecyclerView.Adapter<GroupMembersAdapte
 
     public interface OnMemberActionListener {
         void onDeleteMember(GroupMemberWithStats member);
+        void onMemberClick(GroupMemberWithStats member);
     }
 
     public GroupMembersAdapter(boolean isCurrentUserAdmin) {
@@ -80,9 +84,21 @@ public class GroupMembersAdapter extends RecyclerView.Adapter<GroupMembersAdapte
                          OnMemberActionListener listener, NumberFormat currencyFormat) {
             tvMemberName.setText(member.getUserName());
 
-            String stats = "Gastos totales: " + currencyFormat.format(member.getTotalExpenses()) +
-                    ", # transacciones: " + member.getTransactionCount();
-            tvMemberStats.setText(stats);
+            // Show balance instead of expenses
+            double balance = member.getBalance();
+            String balanceText = "Balance: " + currencyFormat.format(balance);
+            tvMemberStats.setText(balanceText);
+
+            // Make card clickable for owner
+            if (isCurrentUserAdmin) {
+                itemView.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onMemberClick(member);
+                    }
+                });
+            } else {
+                itemView.setOnClickListener(null);
+            }
 
             // Show delete button only if current user is admin and this member is not admin
             if (isCurrentUserAdmin && !member.isAdmin()) {
@@ -96,8 +112,22 @@ public class GroupMembersAdapter extends RecyclerView.Adapter<GroupMembersAdapte
                 btnDeleteMember.setVisibility(View.GONE);
             }
 
-            // TODO: Load avatar image if available
-            // For now, use default avatar background
+            // Show admin badge
+            if (member.isAdmin()) {
+                tvMemberName.setText(member.getUserName() + " (Admin)");
+            }
+
+            // Load avatar image if available
+            if (member.getPhotoUrl() != null && !member.getPhotoUrl().isEmpty()) {
+                Bitmap bitmap = ImageHelper.loadBitmapFromPath(member.getPhotoUrl());
+                if (bitmap != null) {
+                    imgAvatar.setImageBitmap(bitmap);
+                } else {
+                    imgAvatar.setImageResource(R.drawable.ic_person);
+                }
+            } else {
+                imgAvatar.setImageResource(R.drawable.ic_person);
+            }
         }
     }
 }

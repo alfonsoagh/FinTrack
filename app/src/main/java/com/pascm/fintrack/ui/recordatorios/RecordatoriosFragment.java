@@ -4,13 +4,13 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.pascm.fintrack.R;
 import com.pascm.fintrack.databinding.FragmentRecordatoriosBinding;
 
 public class RecordatoriosFragment extends Fragment {
@@ -34,9 +34,10 @@ public class RecordatoriosFragment extends Fragment {
 
         binding.btnClose.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
 
-        binding.fabAddReminder.setOnClickListener(v ->
-                Toast.makeText(requireContext(), binding.fabAddReminder.getContentDescription(), Toast.LENGTH_SHORT).show()
-        );
+        binding.fabAddReminder.setOnClickListener(v -> {
+            // Navegar a CreditCardsFragment para gestionar tarjetas
+            Navigation.findNavController(v).navigate(R.id.creditCardsFragment);
+        });
     }
 
     @Override

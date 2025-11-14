@@ -5,10 +5,16 @@ public class GroupMemberWithStats {
     private String userName;
     private String userEmail;
     private double totalExpenses;
+    private double totalIncome;
     private int transactionCount;
     private boolean isAdmin;
+    private String photoUrl;
 
     public GroupMemberWithStats() {
+    }
+
+    public double getBalance() {
+        return totalIncome - totalExpenses;
     }
 
     // Getters and Setters
@@ -58,5 +64,21 @@ public class GroupMemberWithStats {
 
     public void setAdmin(boolean admin) {
         isAdmin = admin;
+    }
+
+    public double getTotalIncome() {
+        return totalIncome;
+    }
+
+    public void setTotalIncome(double totalIncome) {
+        this.totalIncome = totalIncome;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 }

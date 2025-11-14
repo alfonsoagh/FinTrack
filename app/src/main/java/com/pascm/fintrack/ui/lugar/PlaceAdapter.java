@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,8 +25,6 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
 
     public interface OnPlaceActionListener {
         void onPlaceClick(Merchant place);
-        void onEditClick(Merchant place);
-        void onDeleteClick(Merchant place);
     }
 
     public PlaceAdapter() {
@@ -69,8 +66,6 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
         private final TextView txtPlaceCoordinates;
         private final TextView txtUsageCount;
         private final ImageView imgFrequentBadge;
-        private final Button btnEdit;
-        private final Button btnDelete;
 
         public PlaceViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -80,8 +75,6 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
             txtPlaceCoordinates = itemView.findViewById(R.id.txt_place_coordinates);
             txtUsageCount = itemView.findViewById(R.id.txt_usage_count);
             imgFrequentBadge = itemView.findViewById(R.id.img_frequent_badge);
-            btnEdit = itemView.findViewById(R.id.btn_edit_place);
-            btnDelete = itemView.findViewById(R.id.btn_delete_place);
         }
 
         public void bind(Merchant place, OnPlaceActionListener listener) {
@@ -130,24 +123,10 @@ public class PlaceAdapter extends RecyclerView.Adapter<PlaceAdapter.PlaceViewHol
             // Badge de favorito
             imgFrequentBadge.setVisibility(place.isFrequent() ? View.VISIBLE : View.GONE);
 
-            // Click en el item completo
+            // Click en el item completo para editar
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onPlaceClick(place);
-                }
-            });
-
-            // Botón editar
-            btnEdit.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onEditClick(place);
-                }
-            });
-
-            // Botón eliminar
-            btnDelete.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onDeleteClick(place);
                 }
             });
         }
